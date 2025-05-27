@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { gptParser } from '@/utils/gptParser';
 
 interface ChatInterfaceProps {
   conversations: any[];
-  setConversations: (conversations: any[]) => void;
+  setConversations: React.Dispatch<React.SetStateAction<any[]>>;
   setActiveModule: (module: string | null) => void;
 }
 
@@ -50,7 +49,7 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
         timestamp: new Date()
       };
 
-      setConversations(prev => [...prev, aiMessage]);
+      setConversations(prevConversations => [...prevConversations, aiMessage]);
       
       if (response.activeModule) {
         setActiveModule(response.activeModule);

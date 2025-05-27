@@ -9,7 +9,233 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      meals: {
+        Row: {
+          calories: number | null
+          created_at: string
+          id: string
+          ingredients: Json | null
+          instructions: string | null
+          meal_type: string | null
+          name: string
+          planned_date: string | null
+          user_id: string
+        }
+        Insert: {
+          calories?: number | null
+          created_at?: string
+          id?: string
+          ingredients?: Json | null
+          instructions?: string | null
+          meal_type?: string | null
+          name: string
+          planned_date?: string | null
+          user_id: string
+        }
+        Update: {
+          calories?: number | null
+          created_at?: string
+          id?: string
+          ingredients?: Json | null
+          instructions?: string | null
+          meal_type?: string | null
+          name?: string
+          planned_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reminders: {
+        Row: {
+          created_at: string
+          due_date: string | null
+          id: string
+          is_completed: boolean | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          is_completed: boolean | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_blocks: {
+        Row: {
+          category: string | null
+          created_at: string
+          end_time: string | null
+          id: string
+          linked_task_id: string | null
+          start_time: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          linked_task_id?: string | null
+          start_time?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          linked_task_id?: string | null
+          start_time?: string | null
+          title?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_blocks_linked_task_id_fkey"
+            columns: ["linked_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_blocks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          full_name: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          created_at: string
+          duration: number | null
+          id: string
+          intensity: string | null
+          is_completed: boolean | null
+          name: string | null
+          shceduled_date: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration?: number | null
+          id?: string
+          intensity?: string | null
+          is_completed?: boolean | null
+          name?: string | null
+          shceduled_date?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration?: number | null
+          id?: string
+          intensity?: string | null
+          is_completed?: boolean | null
+          name?: string | null
+          shceduled_date?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workouts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
