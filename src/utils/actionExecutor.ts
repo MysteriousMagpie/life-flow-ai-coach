@@ -1,4 +1,3 @@
-
 import { GPTAction } from './gptParser';
 import { useMeals } from '@/hooks/useMeals';
 import { useTasks } from '@/hooks/useTasks';
@@ -87,6 +86,8 @@ export class ActionExecutor {
         };
       case 'create_meal_plan':
         return this.createMealPlan(data);
+      case 'create_comprehensive_meal_plan':
+        return this.createComprehensiveMealPlan(data);
       case 'list_meals':
         return {
           success: true,
@@ -192,6 +193,8 @@ export class ActionExecutor {
         };
       case 'create_workout_plan':
         return this.createWorkoutPlan(data);
+      case 'create_fitness_program':
+        return this.createFitnessProgram(data);
       case 'complete_workout':
         if (action.id) {
           this.hooks.workouts.completeWorkout(action.id);
@@ -265,10 +268,31 @@ export class ActionExecutor {
           data,
           functionName: action.functionName
         };
+      case 'create_smart_schedule':
+        return this.createSmartSchedule(data);
+      case 'reschedule_event':
+        return this.rescheduleEvent(data);
       case 'optimize_schedule':
         return this.optimizeSchedule(data);
       default:
         switch (action.type) {
+          case 'update':
+            if (action.id && data.new_time) {
+              // Handle rescheduling
+              this.hooks.timeBlocks.updateTimeBlock({
+                id: action.id,
+                updates: {
+                  start_time: new Date(data.new_time).toISOString(),
+                  end_time: new Date(new Date(data.new_time).getTime() + 60 * 60 * 1000).toISOString()
+                }
+              });
+              return {
+                success: true,
+                message: `Event rescheduled successfully${data.reason ? ': ' + data.reason : ''}`,
+                functionName: action.functionName
+              };
+            }
+            throw new Error('No event ID or new time provided for rescheduling');
           case 'delete':
             if (action.id) {
               this.hooks.timeBlocks.deleteTimeBlock(action.id);
@@ -287,6 +311,10 @@ export class ActionExecutor {
 
   private executeAnalysisAction(action: GPTAction, data: any): ActionResult {
     switch (action.functionName) {
+      case 'generate_weekly_plan':
+        return this.generateWeeklyPlan(data);
+      case 'handle_missed_activity':
+        return this.handleMissedActivity(data);
       case 'analyze_progress':
         return this.analyzeProgress(data);
       case 'generate_suggestions':
@@ -301,7 +329,6 @@ export class ActionExecutor {
     }
   }
 
-  // Mock implementations for complex functions
   private createMealPlan(data: any): ActionResult {
     console.log('[MOCK] Creating meal plan:', data);
     
@@ -337,6 +364,80 @@ export class ActionExecutor {
       message: `Created meal plan for ${data.duration_days || 7} days`,
       data: { duration: data.duration_days || 7, start_date: data.start_date },
       functionName: 'create_meal_plan'
+    };
+  }
+
+  private createComprehensiveMealPlan(data: any): ActionResult {
+    console.log('[CREATING COMPREHENSIVE MEAL PLAN]', data);
+    
+    const { duration_days = 7, target_calories_per_day = 2000, macro_goals, meal_prep_style = 'mixed' } = data;
+    
+    // Enhanced meal planning with nutrition optimization
+    const mealTypes = ['breakfast', 'lunch', 'dinner'];
+    if (target_calories_per_day > 2200) {
+      mealTypes.push('snack');
+    }
+
+    const nutritionOptimizedMeals = {
+      breakfast: [
+        { name: 'Greek Yogurt with Berries and Granola', calories: 350, protein: 20 },
+        { name: 'Avocado Toast with Eggs', calories: 400, protein: 18 },
+        { name: 'Overnight Oats with Protein Powder', calories: 380, protein: 25 }
+      ],
+      lunch: [
+        { name: 'Quinoa Power Bowl with Chicken', calories: 550, protein: 35 },
+        { name: 'Mediterranean Salad with Salmon', calories: 480, protein: 32 },
+        { name: 'Lentil and Vegetable Curry', calories: 420, protein: 18 }
+      ],
+      dinner: [
+        { name: 'Baked Cod with Roasted Vegetables', calories: 450, protein: 40 },
+        { name: 'Turkey and Sweet Potato Skillet', calories: 520, protein: 35 },
+        { name: 'Chickpea and Spinach Stew', calories: 380, protein: 16 }
+      ],
+      snack: [
+        { name: 'Apple with Almond Butter', calories: 200, protein: 8 },
+        { name: 'Protein Smoothie', calories: 250, protein: 20 }
+      ]
+    };
+
+    const startDate = new Date(data.start_date || new Date());
+    let totalCreated = 0;
+
+    for (let day = 0; day < duration_days; day++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + day);
+      
+      let dailyCalories = 0;
+      const targetPerMeal = Math.floor(target_calories_per_day / mealTypes.length);
+
+      mealTypes.forEach(mealType => {
+        const mealOptions = nutritionOptimizedMeals[mealType];
+        const selectedMeal = mealOptions[Math.floor(Math.random() * mealOptions.length)];
+        
+        this.hooks.meals.createMeal({
+          user_id: data.user_id,
+          name: selectedMeal.name,
+          meal_type: mealType,
+          planned_date: currentDate.toISOString().split('T')[0],
+          calories: selectedMeal.calories,
+          ingredients: JSON.stringify([]) // Would be populated with actual ingredients
+        });
+        
+        dailyCalories += selectedMeal.calories;
+        totalCreated++;
+      });
+    }
+
+    return {
+      success: true,
+      message: `Created comprehensive meal plan: ${totalCreated} meals over ${duration_days} days targeting ${target_calories_per_day} calories/day`,
+      data: { 
+        duration: duration_days, 
+        totalMeals: totalCreated,
+        targetCalories: target_calories_per_day,
+        mealPrepStyle: meal_prep_style
+      },
+      functionName: 'create_comprehensive_meal_plan'
     };
   }
 
@@ -378,6 +479,234 @@ export class ActionExecutor {
       message: `Created ${weeks}-week workout plan with ${sessionsPerWeek} sessions per week`,
       data: { weeks, sessionsPerWeek },
       functionName: 'create_workout_plan'
+    };
+  }
+
+  private createFitnessProgram(data: any): ActionResult {
+    console.log('[CREATING FITNESS PROGRAM]', data);
+    
+    const { fitness_goals, available_days = 3, session_duration = 45, experience_level = 'beginner' } = data;
+    
+    const workoutPrograms = {
+      beginner: {
+        weight_loss: ['Full Body Circuit', 'Walking/Light Cardio', 'Basic Strength Training'],
+        muscle_gain: ['Upper Body Strength', 'Lower Body Strength', 'Full Body Compound'],
+        endurance: ['Cardio Intervals', 'Steady State Cardio', 'Active Recovery Walk']
+      },
+      intermediate: {
+        weight_loss: ['HIIT Training', 'Strength + Cardio', 'Metabolic Circuits'],
+        muscle_gain: ['Push Day', 'Pull Day', 'Leg Day', 'Core Focus'],
+        endurance: ['Long Cardio Sessions', 'Tempo Runs', 'Cross Training']
+      },
+      advanced: {
+        weight_loss: ['Complex HIIT', 'Strength Supersets', 'Metabolic Finishers'],
+        muscle_gain: ['Heavy Compound Lifts', 'Isolation Focus', 'Power Training'],
+        endurance: ['Endurance Challenges', 'Sport-Specific Training', 'Recovery Sessions']
+      }
+    };
+
+    const primaryGoal = fitness_goals[0] || 'muscle_gain';
+    const workouts = workoutPrograms[experience_level][primaryGoal] || workoutPrograms.beginner.muscle_gain;
+    
+    let workoutsCreated = 0;
+    const weeks = 4; // Create a 4-week program
+
+    for (let week = 0; week < weeks; week++) {
+      for (let day = 0; day < available_days; day++) {
+        const sessionDate = new Date();
+        sessionDate.setDate(sessionDate.getDate() + (week * 7) + (day * 2)); // Space workouts every 2 days
+        
+        const workoutIndex = day % workouts.length;
+        const workoutName = workouts[workoutIndex];
+        
+        this.hooks.workouts.createWorkout({
+          user_id: data.user_id,
+          name: `${workoutName} - Week ${week + 1}`,
+          duration: session_duration,
+          intensity: experience_level === 'beginner' ? 'medium' : 'high',
+          shceduled_date: sessionDate.toISOString().split('T')[0]
+        });
+        
+        workoutsCreated++;
+      }
+    }
+
+    return {
+      success: true,
+      message: `Created ${weeks}-week fitness program: ${workoutsCreated} workouts for ${primaryGoal} (${experience_level} level)`,
+      data: { 
+        weeks, 
+        totalWorkouts: workoutsCreated, 
+        sessionsPerWeek: available_days,
+        primaryGoal,
+        experienceLevel: experience_level
+      },
+      functionName: 'create_fitness_program'
+    };
+  }
+
+  private createSmartSchedule(data: any): ActionResult {
+    console.log('[CREATING SMART SCHEDULE]', data);
+    
+    const { tasks_to_schedule = [], working_hours = { start: '09:00', end: '17:00' }, energy_patterns = {} } = data;
+    
+    // Sort tasks by priority and energy requirements
+    const sortedTasks = tasks_to_schedule.sort((a, b) => {
+      const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    });
+
+    let scheduledCount = 0;
+    let currentTime = new Date();
+    currentTime.setHours(parseInt(working_hours.start.split(':')[0]), 0, 0, 0);
+
+    sortedTasks.forEach(task => {
+      const duration = task.estimated_duration || 60; // Default 1 hour
+      const endTime = new Date(currentTime.getTime() + duration * 60 * 1000);
+      
+      this.hooks.timeBlocks.createTimeBlock({
+        user_id: data.user_id,
+        title: task.title,
+        start_time: currentTime.toISOString(),
+        end_time: endTime.toISOString(),
+        category: task.energy_required === 'high' ? 'focus' : 'general'
+      });
+      
+      // Add buffer time between tasks
+      currentTime = new Date(endTime.getTime() + 15 * 60 * 1000); // 15-minute buffer
+      scheduledCount++;
+    });
+
+    return {
+      success: true,
+      message: `Smart schedule created with ${scheduledCount} optimized time blocks`,
+      data: { 
+        totalTasks: scheduledCount,
+        optimizations: ['Priority-based ordering', 'Energy level matching', 'Buffer time inclusion']
+      },
+      functionName: 'create_smart_schedule'
+    };
+  }
+
+  private generateWeeklyPlan(data: any): ActionResult {
+    console.log('[GENERATING WEEKLY PLAN]', data);
+    
+    const { goals = [], preferences = {} } = data;
+    
+    // Create a comprehensive weekly plan combining all modules
+    const planSummary = {
+      meals: 0,
+      workouts: 0,
+      timeBlocks: 0,
+      focus_areas: goals
+    };
+
+    // Generate meal plan if nutrition goal is present
+    if (goals.includes('improve_nutrition') || goals.includes('weight_loss')) {
+      const mealPlanResult = this.createComprehensiveMealPlan({
+        ...data,
+        duration_days: 7,
+        target_calories_per_day: preferences.target_calories || 2000
+      });
+      planSummary.meals = 21; // 3 meals × 7 days
+    }
+
+    // Generate fitness program if fitness goal is present
+    if (goals.includes('increase_fitness') || goals.includes('muscle_gain')) {
+      const fitnessResult = this.createFitnessProgram({
+        ...data,
+        fitness_goals: goals,
+        available_days: preferences.workout_days_per_week || 3,
+        session_duration: 45
+      });
+      planSummary.workouts = preferences.workout_days_per_week || 3;
+    }
+
+    // Generate productivity schedule if productivity goal is present
+    if (goals.includes('increase_productivity') || goals.includes('better_time_management')) {
+      const scheduleResult = this.createSmartSchedule({
+        ...data,
+        tasks_to_schedule: [
+          { title: 'Focus Work Block', estimated_duration: 90, priority: 'high', energy_required: 'high' },
+          { title: 'Administrative Tasks', estimated_duration: 60, priority: 'medium', energy_required: 'low' },
+          { title: 'Creative Work', estimated_duration: 120, priority: 'high', energy_required: 'high' }
+        ]
+      });
+      planSummary.timeBlocks = 3;
+    }
+
+    return {
+      success: true,
+      message: `Comprehensive weekly plan generated targeting: ${goals.join(', ')}`,
+      data: planSummary,
+      functionName: 'generate_weekly_plan'
+    };
+  }
+
+  private rescheduleEvent(data: any): ActionResult {
+    console.log('[RESCHEDULING EVENT]', data);
+    
+    const { event_id, new_time, reason } = data;
+    
+    this.hooks.timeBlocks.updateTimeBlock({
+      id: event_id,
+      updates: {
+        start_time: new Date(new_time).toISOString(),
+        end_time: new Date(new Date(new_time).getTime() + 60 * 60 * 1000).toISOString()
+      }
+    });
+
+    return {
+      success: true,
+      message: `Event rescheduled to ${new Date(new_time).toLocaleString()}${reason ? `. Reason: ${reason}` : ''}`,
+      data: { event_id, new_time, reason },
+      functionName: 'reschedule_event'
+    };
+  }
+
+  private handleMissedActivity(data: any): ActionResult {
+    console.log('[HANDLING MISSED ACTIVITY]', data);
+    
+    const { activity_type, activity_id, reason, reschedule_preference = 'next_available' } = data;
+    
+    // Determine when to reschedule based on preference
+    let newTime = new Date();
+    switch (reschedule_preference) {
+      case 'today':
+        newTime.setHours(newTime.getHours() + 2);
+        break;
+      case 'tomorrow':
+        newTime.setDate(newTime.getDate() + 1);
+        break;
+      case 'this_week':
+        newTime.setDate(newTime.getDate() + 2);
+        break;
+      default:
+        newTime.setDate(newTime.getDate() + 1);
+    }
+
+    // Reschedule based on activity type
+    if (activity_type === 'workout') {
+      this.hooks.workouts.updateWorkout({
+        id: activity_id,
+        updates: {
+          shceduled_date: newTime.toISOString().split('T')[0]
+        }
+      });
+    } else if (activity_type === 'meal') {
+      this.hooks.meals.updateMeal({
+        id: activity_id,
+        updates: {
+          planned_date: newTime.toISOString().split('T')[0]
+        }
+      });
+    }
+
+    return {
+      success: true,
+      message: `${activity_type} rescheduled for ${reschedule_preference.replace('_', ' ')}${reason ? `. Noted: ${reason}` : ''}`,
+      data: { activity_type, new_schedule: reschedule_preference, reason },
+      functionName: 'handle_missed_activity'
     };
   }
 

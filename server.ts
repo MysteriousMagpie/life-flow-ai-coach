@@ -1,4 +1,3 @@
-
 import express from 'express';
 import OpenAI from 'openai';
 import cors from 'cors';
@@ -18,6 +17,213 @@ const openai = new OpenAI({
 
 // Function definitions for all core modules
 const functions = [
+  // Enhanced comprehensive planning functions
+  {
+    name: "generate_weekly_plan",
+    description: "Generate a comprehensive weekly plan based on user goals and preferences",
+    parameters: {
+      type: "object",
+      properties: {
+        goals: {
+          type: "array",
+          items: { type: "string" },
+          description: "User's goals (improve_nutrition, increase_fitness, productivity, etc.)"
+        },
+        preferences: {
+          type: "object",
+          properties: {
+            workout_days_per_week: { type: "number" },
+            diet_type: { type: "string" },
+            available_hours_per_day: { type: "number" },
+            preferred_workout_time: { type: "string" },
+            meal_prep_preference: { type: "string" }
+          }
+        },
+        constraints: {
+          type: "array",
+          items: { type: "string" },
+          description: "Any scheduling constraints or limitations"
+        },
+        current_schedule: {
+          type: "array",
+          items: { type: "object" },
+          description: "Existing commitments to work around"
+        }
+      },
+      required: ["goals"]
+    }
+  },
+  {
+    name: "create_comprehensive_meal_plan",
+    description: "Create a detailed meal plan with nutrition optimization",
+    parameters: {
+      type: "object",
+      properties: {
+        duration_days: { type: "number", description: "Number of days to plan for" },
+        dietary_preferences: { 
+          type: "array", 
+          items: { type: "string" },
+          description: "Dietary preferences or restrictions"
+        },
+        target_calories_per_day: { type: "number" },
+        macro_goals: {
+          type: "object",
+          properties: {
+            protein_percent: { type: "number" },
+            carb_percent: { type: "number" },
+            fat_percent: { type: "number" }
+          }
+        },
+        meal_prep_style: { 
+          type: "string",
+          enum: ["daily_fresh", "weekly_prep", "mixed"],
+          description: "Meal preparation preference"
+        },
+        budget_constraint: { type: "string" },
+        cooking_skill_level: { 
+          type: "string",
+          enum: ["beginner", "intermediate", "advanced"]
+        }
+      },
+      required: ["duration_days", "target_calories_per_day"]
+    }
+  },
+  {
+    name: "create_fitness_program",
+    description: "Create a structured fitness program based on goals and experience",
+    parameters: {
+      type: "object",
+      properties: {
+        fitness_goals: {
+          type: "array",
+          items: { type: "string" },
+          description: "Primary fitness goals (weight_loss, muscle_gain, endurance, etc.)"
+        },
+        experience_level: {
+          type: "string",
+          enum: ["beginner", "intermediate", "advanced"],
+          description: "Current fitness experience level"
+        },
+        available_days: {
+          type: "number",
+          description: "Days per week available for workouts"
+        },
+        session_duration: {
+          type: "number",
+          description: "Preferred workout duration in minutes"
+        },
+        equipment_access: {
+          type: "array",
+          items: { type: "string" },
+          description: "Available equipment (gym, home_weights, bodyweight, etc.)"
+        },
+        injury_considerations: {
+          type: "array",
+          items: { type: "string" },
+          description: "Any injuries or physical limitations"
+        },
+        preferred_workout_types: {
+          type: "array",
+          items: { type: "string" },
+          description: "Preferred types of exercise"
+        }
+      },
+      required: ["fitness_goals", "available_days"]
+    }
+  },
+  {
+    name: "create_smart_schedule",
+    description: "Create an optimized daily/weekly schedule considering priorities and energy levels",
+    parameters: {
+      type: "object",
+      properties: {
+        tasks_to_schedule: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              estimated_duration: { type: "number" },
+              priority: { type: "string", enum: ["low", "medium", "high", "urgent"] },
+              energy_required: { type: "string", enum: ["low", "medium", "high"] },
+              preferred_time: { type: "string" },
+              deadline: { type: "string" }
+            }
+          }
+        },
+        working_hours: {
+          type: "object",
+          properties: {
+            start: { type: "string" },
+            end: { type: "string" }
+          }
+        },
+        energy_patterns: {
+          type: "object",
+          properties: {
+            peak_hours: { type: "array", items: { type: "string" } },
+            low_energy_hours: { type: "array", items: { type: "string" } }
+          }
+        },
+        break_preferences: {
+          type: "object",
+          properties: {
+            frequency_minutes: { type: "number" },
+            duration_minutes: { type: "number" }
+          }
+        }
+      },
+      required: ["tasks_to_schedule"]
+    }
+  },
+  {
+    name: "reschedule_event",
+    description: "Reschedule an existing event due to conflicts or changes",
+    parameters: {
+      type: "object",
+      properties: {
+        event_id: { type: "string", description: "ID of the event to reschedule" },
+        new_time: { type: "string", description: "New date/time for the event" },
+        reason: { type: "string", description: "Reason for rescheduling" },
+        find_alternatives: { 
+          type: "boolean", 
+          description: "Whether to suggest alternative times if new time conflicts"
+        },
+        notify_related: {
+          type: "boolean",
+          description: "Whether to update related events/reminders"
+        }
+      },
+      required: ["event_id", "new_time"]
+    }
+  },
+  {
+    name: "handle_missed_activity",
+    description: "Handle when user reports missing an activity and suggest alternatives",
+    parameters: {
+      type: "object",
+      properties: {
+        activity_type: { 
+          type: "string",
+          enum: ["workout", "meal", "task", "appointment"],
+          description: "Type of activity that was missed"
+        },
+        activity_id: { type: "string", description: "ID of the missed activity" },
+        reason: { type: "string", description: "Why the activity was missed" },
+        reschedule_preference: {
+          type: "string",
+          enum: ["today", "tomorrow", "this_week", "next_available"],
+          description: "When to reschedule"
+        },
+        modify_future: {
+          type: "boolean",
+          description: "Whether to adjust future similar activities"
+        }
+      },
+      required: ["activity_type", "activity_id"]
+    }
+  },
+
   // Meals module functions
   {
     name: "create_meal",
@@ -434,25 +640,37 @@ app.post('/api/gpt', async (req, res) => {
       messages: [
         { 
           role: 'system', 
-          content: `You are a helpful AI life planning assistant specialized in helping users manage their daily life through meals, tasks, workouts, reminders, and time blocking.
+          content: `You are a highly intelligent AI life planning assistant that excels at creating comprehensive, personalized plans for users' daily lives.
 
-Your role is to:
-1. Understand user requests for creating, managing, or querying their life planning data
-2. Use the available functions to perform actions when appropriate
-3. Provide helpful, actionable advice and confirmations
-4. Be proactive in suggesting improvements to their planning
+Your expertise includes:
+- Creating detailed meal plans optimized for nutrition and lifestyle
+- Designing fitness programs tailored to individual goals and constraints  
+- Smart scheduling that considers energy levels, priorities, and time management
+- Handling schedule changes and conflicts gracefully
+- Providing adaptive suggestions when plans need adjustment
 
-When users ask you to create items, always use the appropriate functions. When they ask about existing items, use list functions if available.
+When users express goals like "help me eat better and get to the gym," you should:
+1. Use generate_weekly_plan to create a comprehensive approach
+2. Use create_comprehensive_meal_plan for detailed nutrition planning
+3. Use create_fitness_program for structured workout routines
+4. Use create_smart_schedule to integrate everything into their calendar
+5. Use reschedule_event and handle_missed_activity for adjustments
+
+For planning requests, always:
+- Ask clarifying questions if important details are missing
+- Consider user's lifestyle, constraints, and preferences
+- Create realistic, achievable plans
+- Provide specific, actionable recommendations
+- Build in flexibility for adjustments
 
 Available function categories:
-- Meals: create_meal, create_meal_plan, list_meals
-- Tasks: create_task, list_tasks, complete_task, update_task_priority
-- Workouts: create_workout, create_workout_plan, complete_workout
-- Reminders: create_reminder, list_reminders
-- Time Blocks: create_time_block, optimize_schedule
-- Analysis: analyze_progress, generate_suggestions
+- Comprehensive Planning: generate_weekly_plan, create_comprehensive_meal_plan, create_fitness_program, create_smart_schedule
+- Schedule Management: reschedule_event, handle_missed_activity
+- Basic Operations: create_meal, create_task, create_workout, create_reminder, create_time_block
+- Information Retrieval: list_meals, list_tasks, list_reminders
+- Optimization: optimize_schedule, analyze_progress, generate_suggestions
 
-Be conversational, encouraging, and focus on helping them build better habits and organization.`
+Be encouraging, supportive, and focus on sustainable lifestyle improvements.`
         },
         { role: 'user', content: input }
       ],
