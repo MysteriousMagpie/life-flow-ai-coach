@@ -3,6 +3,7 @@ export interface ParsedResponse {
   actions: GPTAction[];
   activeModule: string | null;
   data: any;
+  functionResults?: any[];
 }
 
 export interface GPTAction {
@@ -35,7 +36,8 @@ export class GPTParser {
         message: json.message || "I'm here to help you plan your life better!",
         actions,
         activeModule: this.determineActiveModule(actions),
-        data: json.data || {}
+        data: json.data || {},
+        functionResults: json.function_results || []
       };
     } catch (error) {
       console.error('GPT Parser Error:', error);
@@ -43,7 +45,8 @@ export class GPTParser {
         message: "I'm having trouble connecting to my AI services. Please try again.",
         actions: [],
         activeModule: null,
-        data: {}
+        data: {},
+        functionResults: []
       };
     }
   }
@@ -157,7 +160,44 @@ export class GPTParser {
       
       console.log('[PARSING FUNCTION CALL]', { name, args });
       
+      // Map function calls to actions
       switch (name) {
+        case 'createMeal':
+          return { 
+            type: 'create', 
+            module: 'meals', 
+            data: args, 
+            functionName: name 
+          };
+        case 'scheduleWorkout':
+          return { 
+            type: 'create', 
+            module: 'workouts', 
+            data: args, 
+            functionName: name 
+          };
+        case 'addTask':
+          return { 
+            type: 'create', 
+            module: 'tasks', 
+            data: args, 
+            functionName: name 
+          };
+        case 'addReminder':
+          return { 
+            type: 'create', 
+            module: 'reminders', 
+            data: args, 
+            functionName: name 
+          };
+        case 'createTimeBlock':
+          return { 
+            type: 'create', 
+            module: 'time_blocks', 
+            data: args, 
+            functionName: name 
+          };
+
         // Enhanced meal planning
         case 'create_comprehensive_meal_plan':
           return { 
@@ -206,8 +246,6 @@ export class GPTParser {
             data: { ...args, planType: 'weekly' }, 
             functionName: name 
           };
-
-        // ... keep existing code (all the original function call mappings)
         
         // Meals module
         case 'create_meal':
