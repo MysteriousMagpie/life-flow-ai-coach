@@ -24,6 +24,18 @@ export const workoutsService = {
     return data;
   },
 
+  async getByDateRange(startDate: string, endDate: string): Promise<Workout[]> {
+    const { data, error } = await supabase
+      .from('workouts')
+      .select('*')
+      .gte('shceduled_date', startDate)
+      .lte('shceduled_date', endDate)
+      .order('shceduled_date', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
   async create(workout: CreateWorkout): Promise<Workout> {
     const { data, error } = await supabase
       .from('workouts')
@@ -54,5 +66,13 @@ export const workoutsService = {
       .eq('id', id);
     
     if (error) throw error;
+  },
+
+  async markComplete(id: string): Promise<Workout> {
+    return this.update(id, { is_completed: true });
+  },
+
+  async markIncomplete(id: string): Promise<Workout> {
+    return this.update(id, { is_completed: false });
   }
 };

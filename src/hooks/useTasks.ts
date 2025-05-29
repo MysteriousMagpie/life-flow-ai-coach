@@ -17,6 +17,30 @@ export const useTasks = () => {
     queryFn: tasksService.getAll,
   });
 
+  const {
+    data: pendingTasks = [],
+    isLoading: isPendingLoading
+  } = useQuery({
+    queryKey: ['tasks', 'pending'],
+    queryFn: tasksService.getPending,
+  });
+
+  const {
+    data: completedTasks = [],
+    isLoading: isCompletedLoading
+  } = useQuery({
+    queryKey: ['tasks', 'completed'],
+    queryFn: tasksService.getCompleted,
+  });
+
+  const {
+    data: overdueTasks = [],
+    isLoading: isOverdueLoading
+  } = useQuery({
+    queryKey: ['tasks', 'overdue'],
+    queryFn: tasksService.getOverdue,
+  });
+
   const createMutation = useMutation({
     mutationFn: tasksService.create,
     onSuccess: () => {
@@ -72,15 +96,61 @@ export const useTasks = () => {
     },
   });
 
+  const completeMutation = useMutation({
+    mutationFn: tasksService.markComplete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({
+        title: "Success",
+        description: "Task marked as complete",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to complete task",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const incompleteMutation = useMutation({
+    mutationFn: tasksService.markIncomplete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast({
+        title: "Success",
+        description: "Task marked as incomplete",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark task incomplete",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     tasks,
+    pendingTasks,
+    completedTasks,
+    overdueTasks,
     isLoading,
+    isPendingLoading,
+    isCompletedLoading,
+    isOverdueLoading,
     error,
     createTask: createMutation.mutate,
     updateTask: updateMutation.mutate,
     deleteTask: deleteMutation.mutate,
+    completeTask: completeMutation.mutate,
+    incompleteTask: incompleteMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isCompleting: completeMutation.isPending,
+    isIncompleting: incompleteMutation.isPending,
   };
 };

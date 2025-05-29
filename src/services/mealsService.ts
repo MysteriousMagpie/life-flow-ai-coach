@@ -24,6 +24,40 @@ export const mealsService = {
     return data;
   },
 
+  async getByDateRange(startDate: string, endDate: string): Promise<Meal[]> {
+    const { data, error } = await supabase
+      .from('meals')
+      .select('*')
+      .gte('planned_date', startDate)
+      .lte('planned_date', endDate)
+      .order('planned_date', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getByMealType(mealType: string): Promise<Meal[]> {
+    const { data, error } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('meal_type', mealType)
+      .order('planned_date', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getByDate(date: string): Promise<Meal[]> {
+    const { data, error } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('planned_date', date)
+      .order('meal_type');
+    
+    if (error) throw error;
+    return data || [];
+  },
+
   async create(meal: CreateMeal): Promise<Meal> {
     const { data, error } = await supabase
       .from('meals')

@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mealsService } from '@/services/mealsService';
 import { Meal, CreateMeal, UpdateMeal } from '@/types/database';
@@ -73,6 +72,19 @@ export const useMeals = () => {
     },
   });
 
+  // Additional hooks for specific queries
+  const useMealsByDate = (date: string) => useQuery({
+    queryKey: ['meals', 'date', date],
+    queryFn: () => mealsService.getByDate(date),
+    enabled: !!date,
+  });
+
+  const useMealsByDateRange = (startDate: string, endDate: string) => useQuery({
+    queryKey: ['meals', 'dateRange', startDate, endDate],
+    queryFn: () => mealsService.getByDateRange(startDate, endDate),
+    enabled: !!startDate && !!endDate,
+  });
+
   return {
     meals,
     isLoading,
@@ -83,5 +95,7 @@ export const useMeals = () => {
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    useMealsByDate,
+    useMealsByDateRange,
   };
 };
