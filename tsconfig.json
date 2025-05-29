@@ -6,6 +6,11 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
+    "target": "ES2020",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "strict": true,
     "paths": {
       "@/*": ["./src/*"]
     },
