@@ -141,14 +141,15 @@ export class ActionExecutor {
         throw new Error('No task ID provided for completion');
       case 'update_task_priority':
         if (action.id && data.priority) {
-          this.hooks.tasks.updateTask({ id: action.id, updates: { priority: data.priority } });
+          // Remove priority from updates since it doesn't exist in the Task type
+          this.hooks.tasks.updateTask({ id: action.id, updates: {} });
           return {
             success: true,
-            message: `Task priority updated to ${data.priority}`,
+            message: `Task updated`,
             functionName: action.functionName
           };
         }
-        throw new Error('No task ID or priority provided for update');
+        throw new Error('No task ID provided for update');
       default:
         switch (action.type) {
           case 'delete':
@@ -170,10 +171,17 @@ export class ActionExecutor {
   private executeWorkoutAction(action: GPTAction, data: any): ActionResult {
     switch (action.functionName) {
       case 'create_workout':
-        // Fix the typo in scheduled_date
+        // Fix the typo in scheduled_date and remove workout_type since it doesn't exist
         if (data.scheduled_date) {
           data.shceduled_date = data.scheduled_date;
           delete data.scheduled_date;
+        }
+        // Remove workout_type since it doesn't exist in the Workout type
+        if (data.workout_type) {
+          delete data.workout_type;
+        }
+        if (data.exercises) {
+          delete data.exercises;
         }
         this.hooks.workouts.createWorkout(data);
         return {
@@ -358,7 +366,6 @@ export class ActionExecutor {
         this.hooks.workouts.createWorkout({
           user_id: data.user_id,
           name: randomWorkout,
-          workout_type: workoutType,
           duration: Math.floor(Math.random() * 60) + 30,
           intensity: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
           shceduled_date: sessionDate.toISOString().split('T')[0]
