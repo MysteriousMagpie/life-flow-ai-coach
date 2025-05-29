@@ -1,9 +1,13 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { gptParser } from '@/utils/gptParser';
+import { gptParser, GPTAction } from '@/utils/gptParser';
+import { useMeals } from '@/hooks/useMeals';
+import { useTasks } from '@/hooks/useTasks';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ChatInterfaceProps {
   conversations: any[];
@@ -15,12 +19,40 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  
+  const { createMeal } = useMeals();
+  const { createTask } = useTasks();
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [conversations]);
+
+  const executeActions = async (actions: GPTAction[]) => {
+    if (!user) return;
+
+    for (const action of actions) {
+      try {
+        if (action.type === 'create') {
+          const dataWithUserId = { ...action.data, user_id: user.id };
+          
+          switch (action.module) {
+            case 'meals':
+              createMeal(dataWithUserId);
+              break;
+            case 'tasks':
+              createTask(dataWithUserId);
+              break;
+            // Add other modules as needed
+          }
+        }
+      } catch (error) {
+        console.error('Error executing action:', error);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,9 +69,13 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
     setInput('');
     setIsProcessing(true);
 
-    // Simulate processing delay
-    setTimeout(async () => {
+    try {
       const response = await gptParser.processInput(input);
+      
+      // Execute any actions suggested by GPT
+      if (response.actions && response.actions.length > 0) {
+        await executeActions(response.actions);
+      }
       
       const aiMessage = {
         id: Date.now() + 1,
@@ -55,8 +91,18 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
         setActiveModule(response.activeModule);
       }
       
+    } catch (error) {
+      console.error('Error processing input:', error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: 'assistant',
+        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        timestamp: new Date()
+      };
+      setConversations(prevConversations => [...prevConversations, errorMessage]);
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -75,10 +121,10 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
               <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-6 mb-4">
                 <h3 className="font-semibold text-gray-800 mb-2">Try saying:</h3>
                 <div className="space-y-2 text-sm text-gray-600">
-                  <p>"Help me eat better and get back to the gym"</p>
-                  <p>"Plan my meals for this week"</p>
-                  <p>"Create a realistic weekly schedule"</p>
-                  <p>"I need to find time for creative work"</p>
+                  <p>"Create a healthy breakfast for tomorrow"</p>
+                  <p>"Add a gym workout for this week"</p>
+                  <p>"Remind me to call mom tomorrow"</p>
+                  <p>"Schedule time for creative work"</p>
                 </div>
               </div>
             </div>
@@ -97,11 +143,11 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
                 }`}
               >
                 <p className="text-sm">{message.content}</p>
-                {message.actions && (
+                {message.actions && message.actions.length > 0 && (
                   <div className="mt-2 space-y-1">
-                    {message.actions.map((action: any, index: number) => (
+                    {message.actions.map((action: GPTAction, index: number) => (
                       <div key={index} className="text-xs bg-white/20 rounded px-2 py-1">
-                        ✓ {action}
+                        ✓ Created {action.module.slice(0, -1)}: {action.data?.name || action.data?.title}
                       </div>
                     ))}
                   </div>
