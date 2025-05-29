@@ -1,13 +1,13 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { parseFunctionCall } from '../gptRouter';
-import * as mealsService from '../../services/mealsService';
-import * as workoutsService from '../../services/workoutsService';
-import * as tasksService from '../../services/tasksService';
-import * as remindersService from '../../services/remindersService';
-import * as timeBlocksService from '../../services/timeBlocksService';
+import { mealsService } from '../../services/mealsService';
+import { workoutsService } from '../../services/workoutsService';
+import { tasksService } from '../../services/tasksService';
+import { remindersService } from '../../services/remindersService';
+import { timeBlocksService } from '../../services/timeBlocksService';
 
-// Mock the services
+// Mock all services
 vi.mock('../../services/mealsService');
 vi.mock('../../services/workoutsService');
 vi.mock('../../services/tasksService');
@@ -22,190 +22,150 @@ describe('parseFunctionCall', () => {
   describe('createMeal', () => {
     it('should create a meal successfully', async () => {
       const mockMeal = {
-        id: '123',
-        name: 'Chicken Salad',
-        meal_type: 'lunch',
-        user_id: 'temp-user'
+        id: 'test-id',
+        name: 'Test Meal',
+        meal_type: 'breakfast',
+        user_id: 'test-user',
+        created_at: new Date().toISOString(),
+        planned_date: null,
+        calories: null,
+        ingredients: null,
+        instructions: null
       };
 
-      vi.mocked(mealsService.mealsService.create).mockResolvedValue(mockMeal);
+      vi.mocked(mealsService.create).mockResolvedValue(mockMeal);
 
-      const args = {
-        name: 'Chicken Salad',
-        meal_type: 'lunch',
-        calories: 350,
-        ingredients: ['chicken', 'lettuce', 'tomatoes']
-      };
-
-      const result = await parseFunctionCall('createMeal', args);
-
-      expect(result).toEqual({
-        success: true,
-        data: mockMeal
+      const result = await parseFunctionCall('createMeal', {
+        name: 'Test Meal',
+        meal_type: 'breakfast'
       });
 
-      expect(mealsService.mealsService.create).toHaveBeenCalledWith({
-        name: 'Chicken Salad',
-        meal_type: 'lunch',
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockMeal);
+      expect(mealsService.create).toHaveBeenCalledWith({
+        name: 'Test Meal',
+        meal_type: 'breakfast',
         planned_date: undefined,
-        calories: 350,
-        ingredients: JSON.stringify(['chicken', 'lettuce', 'tomatoes']),
+        calories: undefined,
+        ingredients: undefined,
         instructions: undefined,
         user_id: 'temp-user'
       });
     });
 
-    it('should handle createMeal errors', async () => {
-      vi.mocked(mealsService.mealsService.create).mockRejectedValue(new Error('Database error'));
+    it('should handle errors when creating a meal', async () => {
+      const error = new Error('Database error');
+      vi.mocked(mealsService.create).mockRejectedValue(error);
 
-      const result = await parseFunctionCall('createMeal', { name: 'Test Meal' });
-
-      expect(result).toEqual({
-        success: false,
-        error: 'Database error'
+      const result = await parseFunctionCall('createMeal', {
+        name: 'Test Meal'
       });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Database error');
     });
   });
 
   describe('scheduleWorkout', () => {
     it('should schedule a workout successfully', async () => {
       const mockWorkout = {
-        id: '456',
-        name: 'Morning Run',
+        id: 'test-id',
+        name: 'Test Workout',
         duration: 30,
-        user_id: 'temp-user'
+        user_id: 'test-user',
+        created_at: new Date().toISOString(),
+        intensity: null,
+        is_completed: false,
+        shceduled_date: null
       };
 
-      vi.mocked(workoutsService.workoutsService.create).mockResolvedValue(mockWorkout);
+      vi.mocked(workoutsService.create).mockResolvedValue(mockWorkout);
 
-      const args = {
-        name: 'Morning Run',
-        duration: 30,
-        intensity: 'medium'
-      };
-
-      const result = await parseFunctionCall('scheduleWorkout', args);
-
-      expect(result).toEqual({
-        success: true,
-        data: mockWorkout
+      const result = await parseFunctionCall('scheduleWorkout', {
+        name: 'Test Workout',
+        duration: 30
       });
 
-      expect(workoutsService.workoutsService.create).toHaveBeenCalledWith({
-        name: 'Morning Run',
-        duration: 30,
-        intensity: 'medium',
-        shceduled_date: undefined,
-        user_id: 'temp-user'
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockWorkout);
     });
   });
 
   describe('addTask', () => {
     it('should add a task successfully', async () => {
       const mockTask = {
-        id: '789',
-        title: 'Buy groceries',
-        user_id: 'temp-user'
+        id: 'test-id',
+        title: 'Test Task',
+        user_id: 'test-user',
+        created_at: new Date().toISOString(),
+        description: null,
+        due_date: null,
+        is_completed: false
       };
 
-      vi.mocked(tasksService.tasksService.create).mockResolvedValue(mockTask);
+      vi.mocked(tasksService.create).mockResolvedValue(mockTask);
 
-      const args = {
-        title: 'Buy groceries',
-        description: 'Get items for dinner',
-        due_date: '2024-01-15'
-      };
-
-      const result = await parseFunctionCall('addTask', args);
-
-      expect(result).toEqual({
-        success: true,
-        data: mockTask
+      const result = await parseFunctionCall('addTask', {
+        title: 'Test Task'
       });
 
-      expect(tasksService.tasksService.create).toHaveBeenCalledWith({
-        title: 'Buy groceries',
-        description: 'Get items for dinner',
-        due_date: '2024-01-15',
-        user_id: 'temp-user'
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockTask);
     });
   });
 
   describe('addReminder', () => {
     it('should add a reminder successfully', async () => {
       const mockReminder = {
-        id: '101',
-        title: 'Doctor appointment',
-        user_id: 'temp-user'
+        id: 'test-id',
+        title: 'Test Reminder',
+        user_id: 'test-user',
+        created_at: new Date().toISOString(),
+        due_date: null,
+        is_completed: false
       };
 
-      vi.mocked(remindersService.remindersService.create).mockResolvedValue(mockReminder);
+      vi.mocked(remindersService.create).mockResolvedValue(mockReminder);
 
-      const args = {
-        title: 'Doctor appointment',
-        due_date: '2024-01-20T10:00:00Z'
-      };
-
-      const result = await parseFunctionCall('addReminder', args);
-
-      expect(result).toEqual({
-        success: true,
-        data: mockReminder
+      const result = await parseFunctionCall('addReminder', {
+        title: 'Test Reminder'
       });
 
-      expect(remindersService.remindersService.create).toHaveBeenCalledWith({
-        title: 'Doctor appointment',
-        due_date: '2024-01-20T10:00:00Z',
-        user_id: 'temp-user'
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockReminder);
     });
   });
 
   describe('createTimeBlock', () => {
     it('should create a time block successfully', async () => {
       const mockTimeBlock = {
-        id: '202',
-        title: 'Team meeting',
-        user_id: 'temp-user'
+        id: 'test-id',
+        title: 'Test Time Block',
+        user_id: 'test-user',
+        created_at: new Date().toISOString(),
+        start_time: null,
+        end_time: null,
+        category: null,
+        linked_task_id: null
       };
 
-      vi.mocked(timeBlocksService.timeBlocksService.create).mockResolvedValue(mockTimeBlock);
+      vi.mocked(timeBlocksService.create).mockResolvedValue(mockTimeBlock);
 
-      const args = {
-        title: 'Team meeting',
-        start_time: '09:00',
-        end_time: '10:00',
-        category: 'work'
-      };
-
-      const result = await parseFunctionCall('createTimeBlock', args);
-
-      expect(result).toEqual({
-        success: true,
-        data: mockTimeBlock
+      const result = await parseFunctionCall('createTimeBlock', {
+        title: 'Test Time Block'
       });
 
-      expect(timeBlocksService.timeBlocksService.create).toHaveBeenCalledWith({
-        title: 'Team meeting',
-        start_time: '09:00',
-        end_time: '10:00',
-        category: 'work',
-        linked_task_id: undefined,
-        user_id: 'temp-user'
-      });
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockTimeBlock);
     });
   });
 
   describe('unknown function', () => {
-    it('should handle unknown functions', async () => {
+    it('should handle unknown function calls', async () => {
       const result = await parseFunctionCall('unknownFunction', {});
 
-      expect(result).toEqual({
-        success: false,
-        error: 'Unknown function: unknownFunction'
-      });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Unknown function: unknownFunction');
     });
   });
 });

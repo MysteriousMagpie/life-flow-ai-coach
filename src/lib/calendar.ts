@@ -1,6 +1,7 @@
 
 import { TimeBlock, Meal } from '@/types/database';
 import { format, parseISO } from 'date-fns';
+import { createEvents, EventAttributes } from 'ics';
 
 export interface ICSEvent {
   uid: string;
@@ -13,43 +14,36 @@ export interface ICSEvent {
 }
 
 export class CalendarGenerator {
-  private static formatICSDate(date: Date): string {
-    return format(date, "yyyyMMdd'T'HHmmss'Z'");
+  private static formatDateArray(date: Date): [number, number, number, number, number] {
+    return [
+      date.getFullYear(),
+      date.getMonth() + 1, // months are 0-indexed in JS but 1-indexed in ICS
+      date.getDate(),
+      date.getHours(),
+      date.getMinutes()
+    ];
   }
 
   static generateICS(events: ICSEvent[]): string {
-    const header = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Life Planning Assistant//EN',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH'
-    ].join('\r\n');
+    const icsEvents: EventAttributes[] = events.map(event => ({
+      uid: event.uid,
+      title: event.title,
+      description: event.description,
+      start: this.formatDateArray(event.startDate),
+      end: this.formatDateArray(event.endDate),
+      location: event.location,
+      categories: event.category ? [event.category] : undefined,
+      status: 'CONFIRMED'
+    }));
 
-    const footer = 'END:VCALENDAR';
-
-    const eventStrings = events.map(event => this.createICSEvent(event));
+    const { error, value } = createEvents(icsEvents);
     
-    return [header, ...eventStrings, footer].join('\r\n');
-  }
-
-  private static createICSEvent(event: ICSEvent): string {
-    const now = new Date();
-    const eventLines = [
-      'BEGIN:VEVENT',
-      `UID:${event.uid}@lifeplanningassistant.com`,
-      `DTSTAMP:${this.formatICSDate(now)}`,
-      `DTSTART:${this.formatICSDate(event.startDate)}`,
-      `DTEND:${this.formatICSDate(event.endDate)}`,
-      `SUMMARY:${event.title}`,
-      event.description ? `DESCRIPTION:${event.description.replace(/\n/g, '\\n')}` : '',
-      event.location ? `LOCATION:${event.location}` : '',
-      event.category ? `CATEGORIES:${event.category}` : '',
-      'STATUS:CONFIRMED',
-      'END:VEVENT'
-    ].filter(line => line !== '');
-
-    return eventLines.join('\r\n');
+    if (error) {
+      console.error('Error creating ICS:', error);
+      throw new Error('Failed to generate ICS file');
+    }
+    
+    return value || '';
   }
 
   static timeBlocksToICS(timeBlocks: TimeBlock[]): string {

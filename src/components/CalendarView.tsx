@@ -17,13 +17,16 @@ import {
   Dumbbell,
   CheckSquare,
   Bell,
-  Utensils
+  Utensils,
+  Download
 } from 'lucide-react';
 import { format, startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 export const CalendarView = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('week');
+  const { toast } = useToast();
   
   const { tasks } = useTasks();
   const { workouts } = useWorkouts();
@@ -55,6 +58,39 @@ export const CalendarView = () => {
     );
     
     return { dayTasks, dayWorkouts, dayReminders, dayTimeBlocks, dayMeals };
+  };
+
+  const handleDownloadCalendar = async () => {
+    try {
+      // Use temp-user since we're not using real authentication yet
+      const response = await fetch('/api/ical/temp-user');
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate calendar export');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'life-flow.ics';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Success",
+        description: "Calendar exported successfully",
+      });
+    } catch (error) {
+      console.error('Calendar export error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export calendar",
+        variant: "destructive",
+      });
+    }
   };
 
   const renderWeekView = () => {
@@ -292,6 +328,15 @@ export const CalendarView = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadCalendar}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download Calendar
+          </Button>
           <Button
             variant={viewMode === 'week' ? 'default' : 'outline'}
             size="sm"

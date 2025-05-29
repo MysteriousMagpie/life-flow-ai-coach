@@ -1,4 +1,3 @@
-
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -49,6 +48,36 @@ app.post('/api/gpt', async (req, res) => {
       message: errorMessage,
       function_calls: [],
       function_results: []
+    });
+  }
+});
+
+// Calendar export endpoint
+app.get('/api/ical/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    console.log('[ICAL REQUEST]', { userId });
+
+    const timeBlocks = await timeBlocksService.getAll();
+    
+    // Filter time blocks for the specific user (when proper auth is implemented)
+    // For now, we'll export all time blocks since we're using temp-user
+    const userTimeBlocks = timeBlocks.filter(block => block.user_id === userId || block.user_id === 'temp-user');
+
+    const { CalendarGenerator } = await import('./src/lib/calendar.js');
+    const icsContent = CalendarGenerator.timeBlocksToICS(userTimeBlocks);
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="life-flow.ics"');
+    res.send(icsContent);
+
+    console.log('[ICAL RESPONSE]', { timeBlocksCount: userTimeBlocks.length });
+  } catch (error) {
+    console.error('[ICAL ERROR]', error);
+    res.status(500).json({ 
+      message: 'Failed to generate calendar export',
+      error: error.message
     });
   }
 });
