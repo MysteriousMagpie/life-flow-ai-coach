@@ -9,6 +9,8 @@ import { LogOut } from 'lucide-react';
 import { MealPlanner } from '@/components/MealPlanner';
 import { WorkoutPlanner } from '@/components/WorkoutPlanner';
 import { CalendarView } from '@/components/CalendarView';
+import { TimelineScheduler } from '@/components/TimelineScheduler';
+import { SchedulingAssistant } from '@/components/SchedulingAssistant';
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState<string | null>(null);
@@ -38,6 +40,10 @@ const Index = () => {
         return <WorkoutPlanner />;
       case 'calendar':
         return <CalendarView />;
+      case 'timeline':
+        return <TimelineScheduler />;
+      case 'scheduling':
+        return <SchedulingAssistant />;
       default:
         return null;
     }
@@ -69,7 +75,7 @@ const Index = () => {
             LifePlan AI
           </h1>
           <p className="text-gray-600 text-lg">
-            Your intelligent life planning assistant with smart insights
+            Your intelligent life planning assistant with advanced calendar integration
           </p>
         </div>
 
@@ -100,6 +106,54 @@ const Index = () => {
             <ModulePanel activeModule={activeModule} />
           </div>
         </div>
+
+        {/* Calendar Integration Section */}
+        {!activeModule && (
+          <div className="mt-8 space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-2">Calendar & Scheduling Tools</h2>
+              <p className="text-gray-600">Advanced scheduling features for better life planning</p>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-blue-300"
+                onClick={() => setActiveModule('calendar')}
+              >
+                <span className="text-lg font-medium">📅 Calendar View</span>
+                <span className="text-sm text-gray-600">Comprehensive calendar with all your activities</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-purple-300"
+                onClick={() => setActiveModule('timeline')}
+              >
+                <span className="text-lg font-medium">⏰ Timeline Scheduler</span>
+                <span className="text-sm text-gray-600">Visual time blocking and scheduling</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-green-300"
+                onClick={() => setActiveModule('scheduling')}
+              >
+                <span className="text-lg font-medium">🧠 Scheduling Assistant</span>
+                <span className="text-sm text-gray-600">AI-powered scheduling optimization</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-orange-300"
+                onClick={() => setActiveModule('meals')}
+              >
+                <span className="text-lg font-medium">🍽️ Meal Planner</span>
+                <span className="text-sm text-gray-600">Plan your weekly meals efficiently</span>
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
