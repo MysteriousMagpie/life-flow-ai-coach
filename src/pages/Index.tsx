@@ -6,6 +6,9 @@ import { ModulePanel } from '@/components/ModulePanel';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogOut } from 'lucide-react';
+import { MealPlanner } from '@/components/MealPlanner';
+import { WorkoutPlanner } from '@/components/WorkoutPlanner';
+import { CalendarView } from '@/components/CalendarView';
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState<string | null>(null);
@@ -14,6 +17,19 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await signOut();
+  };
+  const renderActiveModule = () => {
+    switch (activeModule) {
+      case 'meals':
+        return <MealPlanner />;
+      case 'workouts':
+        return <WorkoutPlanner />;
+      case 'calendar':
+        return <CalendarView />;
+      // Add more modules as needed
+      default:
+        return null;
+    }
   };
 
   return (
@@ -56,6 +72,13 @@ const Index = () => {
               setActiveModule={setActiveModule}
             />
           </div>
+          {activeModule && (
+            <div className="lg:col-span-2 mt-6">
+              {renderActiveModule()}
+            </div>
+          )}
+
+
 
           {/* Dashboard */}
           <div className="space-y-6">
