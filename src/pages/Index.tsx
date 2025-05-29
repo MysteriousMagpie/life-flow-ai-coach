@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ChatInterface } from '@/components/ChatInterface';
-import { Dashboard } from '@/components/Dashboard';
+import { EnhancedDashboard } from '@/components/EnhancedDashboard';
 import { ModulePanel } from '@/components/ModulePanel';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,18 @@ const Index = () => {
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    // Add the suggestion as a user message to trigger AI processing
+    const userMessage = {
+      id: Date.now(),
+      type: 'user',
+      content: suggestion,
+      timestamp: new Date()
+    };
+    setConversations(prev => [...prev, userMessage]);
+  };
+
   const renderActiveModule = () => {
     switch (activeModule) {
       case 'meals':
@@ -26,7 +38,6 @@ const Index = () => {
         return <WorkoutPlanner />;
       case 'calendar':
         return <CalendarView />;
-      // Add more modules as needed
       default:
         return null;
     }
@@ -58,7 +69,7 @@ const Index = () => {
             LifePlan AI
           </h1>
           <p className="text-gray-600 text-lg">
-            Your intelligent life planning assistant
+            Your intelligent life planning assistant with smart insights
           </p>
         </div>
 
@@ -72,21 +83,21 @@ const Index = () => {
               setActiveModule={setActiveModule}
             />
           </div>
+
+          {/* Enhanced Module Display */}
           {activeModule && (
             <div className="lg:col-span-2 mt-6">
               {renderActiveModule()}
             </div>
           )}
 
-
-
-          {/* Dashboard */}
+          {/* Enhanced Dashboard */}
           <div className="space-y-6">
-            <Dashboard activeModule={activeModule} />
-            <ModulePanel 
-              activeModule={activeModule}
-              setActiveModule={setActiveModule}
+            <EnhancedDashboard 
+              activeModule={activeModule} 
+              onSuggestionClick={handleSuggestionClick}
             />
+            <ModulePanel activeModule={activeModule} />
           </div>
         </div>
       </div>

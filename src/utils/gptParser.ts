@@ -88,7 +88,7 @@ export class GPTParser {
       },
       {
         name: "create_task",
-        description: "Create a new task for task management",
+        description: "Create a new task for task management. Use this for any work items, personal tasks, or activities that need to be completed.",
         parameters: {
           type: "object",
           properties: {
@@ -236,6 +236,25 @@ export class GPTParser {
             }
           }
         }
+      },
+      {
+        name: "analyze_progress",
+        description: "Analyze user's progress and provide insights",
+        parameters: {
+          type: "object",
+          properties: {
+            timeframe: {
+              type: "string",
+              enum: ["day", "week", "month"],
+              description: "Timeframe for analysis"
+            },
+            focus_area: {
+              type: "string",
+              enum: ["tasks", "workouts", "meals", "overall"],
+              description: "Specific area to analyze"
+            }
+          }
+        }
       }
     ];
   }
@@ -265,6 +284,9 @@ export class GPTParser {
           return { type: 'list', module: 'tasks', data: args };
         case 'list_meals':
           return { type: 'list', module: 'meals', data: args };
+        case 'analyze_progress':
+          // This doesn't map to a specific action but can be handled in the response
+          return { type: 'list', module: 'tasks', data: { analyze: true, ...args } };
         default:
           console.warn(`Unknown function call: ${name}`);
           return { type: 'create', module: 'tasks', data: {} };
