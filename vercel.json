@@ -7,9 +7,4 @@
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],
-  "functions": {
-    "server.ts": {
-      "runtime": "nodejs18.x"
-    }
-  }
 }
