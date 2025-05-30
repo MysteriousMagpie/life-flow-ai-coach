@@ -4,13 +4,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { gptParser, GPTAction } from '@/utils/gptParser';
-import { ActionExecutor } from '@/utils/actionExecutor';
-import { useMeals } from '@/hooks/useMeals';
-import { useTasks } from '@/hooks/useTasks';
-import { useWorkouts } from '@/hooks/useWorkouts';
-import { useReminders } from '@/hooks/useReminders';
-import { useTimeBlocks } from '@/hooks/useTimeBlocks';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
@@ -25,20 +18,6 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
   const [isProcessing, setIsProcessing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  
-  const mealsHook = useMeals();
-  const tasksHook = useTasks();
-  const workoutsHook = useWorkouts();
-  const remindersHook = useReminders();
-  const timeBlocksHook = useTimeBlocks();
-
-  const actionExecutor = new ActionExecutor({
-    meals: mealsHook,
-    tasks: tasksHook,
-    workouts: workoutsHook,
-    reminders: remindersHook,
-    timeBlocks: timeBlocksHook
-  });
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -56,13 +35,16 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
       content: input,
       timestamp: new Date()
     };
-    // Add the user's message to the local chat history (if you're displaying it)
+
+    // Add user message to conversations
     setConversations((prev) => [...prev, userMessage]);
     setInput("");
     setIsProcessing(true);
 
-    // Send the message to your GPT backend
     try {
+      console.log('[CHAT] Processing input:', input);
+      
+      // Call the centralized backend endpoint
       const response = await fetch("http://localhost:5000/api/gpt", {
         method: "POST",
         headers: {
@@ -70,54 +52,33 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
         },
         body: JSON.stringify({
           message: input,
+          userId: user.id
         }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      // Add GPT's response to the chat (this assumes your backend returns `content`)
+      const data = await response.json();
+      console.log('[CHAT] Backend response:', data);
+
+      // Create assistant message with all the data from backend
       const assistantMessage = {
         id: Date.now() + 1,
         type: 'assistant',
-        content: data.message ?? '[no response]',
+        content: data.message,
+        actions: data.actions || [],
+        actionResults: data.actionResults || [],
         timestamp: new Date()
       };
 
+      // Add assistant message to conversations
       setConversations((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      console.error("GPT API error:", err);
-      // Optional: show error message in UI
-    } finally {
-      setIsProcessing(false);
-    }
-
-
-    try {
-      console.log('[CHAT] Processing input:', input);
-      const response = await gptParser.processInput(input);
-      console.log('[CHAT] GPT Response:', response);
       
-      // Execute any actions suggested by GPT
-      let actionResults = [];
-      if (response.actions && response.actions.length > 0) {
-        console.log('[CHAT] Executing actions:', response.actions);
-        actionResults = await actionExecutor.executeActions(response.actions, user.id);
-        console.log('[CHAT] Action results:', actionResults);
-      }
-      
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: 'assistant',
-        content: response.message,
-        actions: response.actions,
-        actionResults,
-        timestamp: new Date()
-      };
-
-      setConversations(prevConversations => [...prevConversations, aiMessage]);
-      
-      if (response.activeModule) {
-        setActiveModule(response.activeModule);
+      // Set active module if specified
+      if (data.activeModule) {
+        setActiveModule(data.activeModule);
       }
       
     } catch (error) {
@@ -129,7 +90,7 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
         error: true,
         timestamp: new Date()
       };
-      setConversations(prevConversations => [...prevConversations, errorMessage]);
+      setConversations((prev) => [...prev, errorMessage]);
     } finally {
       setIsProcessing(false);
     }
