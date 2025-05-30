@@ -4,8 +4,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 import { ActionResultsDisplay } from './ActionResultsDisplay';
 
+interface Message {
+  id: number;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  actions?: any[];
+  actionResults?: any[];
+  error?: boolean;
+}
+
 interface MessageListProps {
-  conversations: any[];
+  conversations: Message[];
   isProcessing: boolean;
 }
 
@@ -16,7 +26,7 @@ export const MessageList = ({ conversations, isProcessing }: MessageListProps) =
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [conversations]);
+  }, [conversations, isProcessing]);
 
   return (
     <ScrollArea className="flex-1 p-4" ref={scrollRef}>
@@ -40,11 +50,11 @@ export const MessageList = ({ conversations, isProcessing }: MessageListProps) =
         {conversations.map((message) => (
           <div
             key={message.id}
-            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
               className={`max-w-[80%] rounded-lg p-3 ${
-                message.type === 'user'
+                message.role === 'user'
                   ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
                   : message.error 
                   ? 'bg-red-100 text-red-800 border border-red-200'
@@ -54,7 +64,7 @@ export const MessageList = ({ conversations, isProcessing }: MessageListProps) =
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
               
               {/* Render action results */}
-              {message.actionResults && (
+              {message.actionResults && message.actionResults.length > 0 && (
                 <ActionResultsDisplay actionResults={message.actionResults} />
               )}
               

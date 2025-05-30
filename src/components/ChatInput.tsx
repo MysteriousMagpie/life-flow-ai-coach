@@ -22,13 +22,21 @@ export const ChatInput = ({ onSubmit, isProcessing }: ChatInputProps) => {
     setInput('');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="p-4 border-t bg-gray-50/80">
       <div className="flex space-x-2">
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Tell me what you'd like to plan or improve..."
+          onKeyDown={handleKeyDown}
+          placeholder={user ? "Tell me what you'd like to plan or improve..." : "Please log in to use the AI assistant"}
           className="flex-1 border-gray-200 focus:border-blue-500 transition-colors"
           disabled={isProcessing || !user}
         />
