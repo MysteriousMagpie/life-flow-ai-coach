@@ -63,6 +63,7 @@ Life Flow is an intelligent life management platform that combines AI assistance
 | `npm run preview` | Preview the production build locally |
 | `npm run lint` | Run ESLint for code quality checks |
 | `npm test` | Run the test suite with Vitest |
+| `npm run test:e2e` | Run end-to-end tests with Playwright |
 | `npm run server` | Start the Express backend server |
 
 ## 🛠️ Technology Stack
@@ -73,7 +74,7 @@ Life Flow is an intelligent life management platform that combines AI assistance
 - **AI Integration**: OpenAI GPT with function calling
 - **Database**: PostgreSQL (via Supabase)
 - **Authentication**: Supabase Auth
-- **Testing**: Vitest
+- **Testing**: Vitest, Playwright
 - **Deployment**: Vercel (frontend), Railway/Heroku (backend)
 
 ## 🏗️ Project Structure
@@ -94,6 +95,8 @@ src/
 ├── services/           # Supabase service wrappers
 ├── types/              # TypeScript type definitions
 └── utils/              # Helper utilities
+e2e/                    # End-to-end tests
+.github/workflows/      # CI/CD workflows
 ```
 
 ## 🔧 Environment Variables
@@ -114,18 +117,50 @@ src/
 
 ## 🚢 Deployment
 
-### Frontend (Vercel)
+### Vercel Deployment
 
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
+This project is configured for deployment on Vercel with separate environments:
 
-### Backend (Railway/Heroku)
+#### Development Deployment
+```bash
+# Install Vercel CLI
+npm i -g vercel
 
-1. Create a new service on Railway or Heroku
-2. Connect your GitHub repository
-3. Set the `OPENAI_API_KEY` environment variable
-4. Deploy the server using the provided workflows
+# Deploy to development environment
+vercel --prebuilt
+```
+
+#### Production Deployment
+```bash
+# Deploy to production environment
+vercel --prod
+```
+
+#### Environment Configuration
+
+1. **Vercel Dashboard Setup**:
+   - Create "Development" and "Production" environments in your Vercel project
+   - Set environment variables for each environment:
+     - `@openai_api_key` - Your OpenAI API key
+     - `@supabase_url` - Your Supabase project URL
+     - `@supabase_anon_key` - Your Supabase anonymous key
+
+2. **Environment Variables**:
+   - Development: Use development/staging Supabase project
+   - Production: Use production Supabase project
+   - Separate OpenAI API keys can be used for cost management
+
+3. **API Routes**:
+   - The `/api/gpt` endpoint is automatically configured for serverless deployment
+   - Health check available at `/health`
+
+#### Vercel Configuration
+
+The project includes a `vercel.json` file with:
+- Automatic build configuration
+- API route handling
+- Environment variable mapping
+- SPA routing support
 
 ### Manual Deployment
 
@@ -137,8 +172,16 @@ npm run build
 npm run preview
 ```
 
+### Backend (Railway/Heroku)
+
+1. Create a new service on Railway or Heroku
+2. Connect your GitHub repository
+3. Set the `OPENAI_API_KEY` environment variable
+4. Deploy the server using the provided workflows
+
 ## 🧪 Testing
 
+### Unit Tests
 ```bash
 # Run all tests
 npm test
@@ -148,6 +191,29 @@ npm run test:watch
 
 # Run tests with coverage
 npm run test:coverage
+```
+
+### End-to-End Tests
+```bash
+# Install Playwright browsers
+npx playwright install
+
+# Run e2e tests
+npm run test:e2e
+
+# Run e2e tests with UI
+npm run test:e2e -- --ui
+```
+
+#### E2E Test Configuration
+
+Set up environment variables for testing:
+```bash
+# .env.local (for local testing)
+TEST_EMAIL=test@example.com
+TEST_PASSWORD=testpassword123
+VITE_SUPABASE_URL=your_test_supabase_url
+VITE_SUPABASE_ANON_KEY=your_test_supabase_key
 ```
 
 ## 📊 Features
@@ -161,6 +227,7 @@ npm run test:coverage
 - **📈 Analytics**: Progress tracking and insights
 - **📅 Calendar Export**: Export schedules to .ics format
 - **🔐 Authentication**: Secure user authentication via Supabase
+- **💬 Real-time Chat**: Streaming AI responses with optimistic UI
 
 ## 🗺️ Roadmap
 
@@ -170,6 +237,8 @@ npm run test:coverage
 - [x] OpenAI function calling integration
 - [x] Calendar export functionality
 - [x] CI/CD pipeline
+- [x] E2E testing with Playwright
+- [x] Vercel deployment configuration
 
 ### Next Release (v1.1)
 - [ ] Mobile responsive design improvements
@@ -209,3 +278,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - UI components by [shadcn/ui](https://ui.shadcn.com/)
 - Icons by [Lucide](https://lucide.dev/)
 - Backend by [Supabase](https://supabase.com/)
+- Deployed on [Vercel](https://vercel.com/)
+

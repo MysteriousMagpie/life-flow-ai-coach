@@ -1,144 +1,223 @@
 
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { ActionExecutor } from '@/utils/actionExecutor';
-import { actionParser } from '@/utils/parsing/actionParser';
-import { useMeals } from './useMeals';
-import { useTasks } from './useTasks';
-import { useWorkouts } from './useWorkouts';
-import { useReminders } from './useReminders';
-import { useTimeBlocks } from './useTimeBlocks';
+import { useMeals } from '@/hooks/useMeals';
+import { useTasks } from '@/hooks/useTasks';
+import { useWorkouts } from '@/hooks/useWorkouts';
+import { useReminders } from '@/hooks/useReminders';
+import { useTimeBlocks } from '@/hooks/useTimeBlocks';
+import { supabase } from '@/integrations/supabase/client';
 
-interface ChatMessage {
+export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  status?: 'streaming' | 'done';
-  actionResults?: any[];
+  status?: 'sending' | 'streaming' | 'done' | 'error';
+}
+
+export interface GPTResponse {
+  message: string;
+  actions: any[];
+  actionResults: any[];
+  activeModule: string | null;
 }
 
 export const useChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { user } = useAuth();
-
-  // Initialize hooks for action execution
+  const { toast } = useToast();
+  
+  // Initialize hooks for all modules
   const meals = useMeals();
   const tasks = useTasks();
   const workouts = useWorkouts();
   const reminders = useReminders();
   const timeBlocks = useTimeBlocks();
 
-  const actionExecutor = new ActionExecutor({
-    meals,
-    tasks,
-    workouts,
-    reminders,
-    timeBlocks,
-  });
+  const sendMessage = useCallback(async (content: string) => {
+    if (isProcessing || !content.trim()) return;
 
-  const sendMessage = useCallback(async (userInput: string) => {
-    if (!user || !userInput.trim()) return;
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to use the chat feature",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsProcessing(true);
 
-    // 1. Optimistically add user message
+    // Add user message immediately (optimistic UI)
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: userInput.trim(),
+      content: content.trim(),
       timestamp: new Date(),
-      status: 'done',
+      status: 'done'
     };
 
     setMessages(prev => [...prev, userMessage]);
 
-    // 2. Create assistant message placeholder for streaming
+    // Add placeholder assistant message for streaming
     const assistantMessageId = `assistant-${Date.now()}`;
     const assistantMessage: ChatMessage = {
       id: assistantMessageId,
       role: 'assistant',
       content: '',
       timestamp: new Date(),
-      status: 'streaming',
+      status: 'streaming'
     };
 
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      // 3. Fire streaming request to /api/gpt
+      // Prepare conversation history for the API
+      const conversationMessages = [...messages, userMessage].map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
       const response = await fetch('/api/gpt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ input: userInput }),
+        body: JSON.stringify({
+          message: content,
+          messages: conversationMessages,
+          userId: user.id
+        }),
       });
 
-      if (!response.body) {
-        throw new Error('No response body received');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // TODO: Add fallback for browsers without ReadableStream support
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      // Check if response supports streaming
+      if (response.body && response.body.getReader) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullResponse = '';
 
-      let fullContent = '';
-      let functionCalls: any[] = [];
-
-      // 4. Stream response tokens
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            
+            // Look for complete JSON objects in the buffer
+            let newlineIndex;
+            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+              const line = buffer.slice(0, newlineIndex).trim();
+              buffer = buffer.slice(newlineIndex + 1);
               
-              if (data.message) {
-                fullContent += data.message;
-                // Update streaming message content
-                setMessages(prev => prev.map(msg => 
-                  msg.id === assistantMessageId 
-                    ? { ...msg, content: fullContent }
-                    : msg
-                ));
+              if (line) {
+                try {
+                  const chunk = JSON.parse(line);
+                  if (chunk.token) {
+                    fullResponse += chunk.token;
+                    // Update the assistant message with streaming content
+                    setMessages(prev => prev.map(msg => 
+                      msg.id === assistantMessageId 
+                        ? { ...msg, content: fullResponse, status: 'streaming' }
+                        : msg
+                    ));
+                  }
+                } catch (parseError) {
+                  // If not JSON, might be final response
+                  console.log('Non-JSON chunk:', line);
+                }
               }
-
-              if (data.function_calls) {
-                functionCalls = data.function_calls;
-              }
-            } catch (parseError) {
-              console.warn('Failed to parse streaming data:', line);
             }
           }
+        } finally {
+          reader.releaseLock();
         }
-      }
 
-      // 5. Mark assistant message as done
-      setMessages(prev => prev.map(msg => 
-        msg.id === assistantMessageId 
-          ? { ...msg, status: 'done' }
-          : msg
-      ));
+        // If no streaming content was received, fall back to regular response
+        if (!fullResponse) {
+          const data: GPTResponse = await response.json();
+          fullResponse = data.message;
+        }
 
-      // 6. Execute actions if any were detected
-      if (functionCalls.length > 0 && user) {
-        const actions = actionParser.parseFunctionCalls(functionCalls);
-        const actionResults = await actionExecutor.executeActions(actions, user.id);
-        
-        // Update assistant message with action results
+        // Mark streaming as complete
         setMessages(prev => prev.map(msg => 
           msg.id === assistantMessageId 
-            ? { ...msg, actionResults }
+            ? { ...msg, content: fullResponse, status: 'done' }
             : msg
         ));
+
+        // Execute any actions from the response
+        try {
+          const data: GPTResponse = await response.json();
+          if (data.actions && data.actions.length > 0) {
+            const actionExecutor = new ActionExecutor({
+              meals,
+              tasks,
+              workouts,
+              reminders,
+              timeBlocks
+            });
+
+            // Convert actions to the expected format
+            const formattedActions = data.actions.map(action => ({
+              type: action.function || action.type,
+              payload: action.arguments || action.data || {}
+            }));
+
+            await actionExecutor.executeActions(formattedActions, user.id);
+            
+            toast({
+              title: "Actions Completed",
+              description: `Successfully executed ${data.actions.length} action(s)`,
+            });
+          }
+        } catch (actionError) {
+          console.error('Error executing actions:', actionError);
+          // Don't show error to user for action execution failures
+        }
+
+      } else {
+        // Fallback for browsers that don't support streams
+        const data: GPTResponse = await response.json();
+        
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, content: data.message, status: 'done' }
+            : msg
+        ));
+
+        // Execute actions if present
+        if (data.actions && data.actions.length > 0) {
+          const actionExecutor = new ActionExecutor({
+            meals,
+            tasks,
+            workouts,
+            reminders,
+            timeBlocks
+          });
+
+          // Convert actions to the expected format
+          const formattedActions = data.actions.map(action => ({
+            type: action.function || action.type,
+            payload: action.arguments || action.data || {}
+          }));
+
+          await actionExecutor.executeActions(formattedActions, user.id);
+          
+          toast({
+            title: "Actions Completed",
+            description: `Successfully executed ${data.actions.length} action(s)`,
+          });
+        }
       }
 
     } catch (error) {
@@ -149,24 +228,25 @@ export const useChat = () => {
         msg.id === assistantMessageId 
           ? { 
               ...msg, 
-              content: 'Sorry, I encountered an error processing your request. Please try again.',
-              status: 'done'
+              content: 'Sorry, I encountered an error while processing your request. Please try again.',
+              status: 'error'
             }
           : msg
       ));
+
+      toast({
+        title: "Chat Error",
+        description: "Failed to get response from assistant",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
-  }, [user, actionExecutor]);
-
-  const clearMessages = useCallback(() => {
-    setMessages([]);
-  }, []);
+  }, [isProcessing, messages, meals, tasks, workouts, reminders, timeBlocks, toast]);
 
   return {
     messages,
     isProcessing,
     sendMessage,
-    clearMessages,
   };
 };
