@@ -11,6 +11,7 @@ import { useWorkouts } from '@/hooks/useWorkouts';
 import { useReminders } from '@/hooks/useReminders';
 import { useTimeBlocks } from '@/hooks/useTimeBlocks';
 import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: number;
@@ -128,8 +129,8 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
       // Build conversation history
       const messages = buildMessageHistory([...conversations, userMessage]);
       
-      // Get session for auth header
-      const { data: { session } } = await user.getSession();
+      // Get session from supabase client
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.access_token) {
         throw new Error('No valid session found');

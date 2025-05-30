@@ -3,10 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { remindersService } from '@/services/remindersService';
 import { Reminder, CreateReminder, UpdateReminder } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 export const useReminders = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const {
     data: reminders = [],
@@ -16,6 +20,41 @@ export const useReminders = () => {
     queryKey: ['reminders'],
     queryFn: remindersService.getAll,
   });
+
+  // Set up realtime subscription
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('realtime:reminders')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reminders',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Realtime reminders change:', payload);
+          // Refetch reminders data when changes occur
+          queryClient.invalidateQueries({ queryKey: ['reminders'] });
+          
+          // Show notification for new reminders
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "Reminder Added",
+              description: `New reminder "${payload.new.title}" has been created`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [user, queryClient, toast]);
 
   const createMutation = useMutation({
     mutationFn: remindersService.create,

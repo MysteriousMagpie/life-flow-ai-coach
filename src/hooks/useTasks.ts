@@ -3,10 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tasksService } from '@/services/tasksService';
 import { Task, CreateTask, UpdateTask } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 export const useTasks = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const {
     data: tasks = [],
@@ -40,6 +44,46 @@ export const useTasks = () => {
     queryKey: ['tasks', 'overdue'],
     queryFn: tasksService.getOverdue,
   });
+
+  // Set up realtime subscription
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('realtime:tasks')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Realtime tasks change:', payload);
+          // Refetch all task-related queries when changes occur
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          
+          // Show notification for new tasks
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "Task Added",
+              description: `New task "${payload.new.title}" has been added`,
+            });
+          } else if (payload.eventType === 'UPDATE' && payload.new.is_completed && !payload.old.is_completed) {
+            toast({
+              title: "Task Completed",
+              description: `Task "${payload.new.title}" has been marked complete`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [user, queryClient, toast]);
 
   const createMutation = useMutation({
     mutationFn: tasksService.create,
