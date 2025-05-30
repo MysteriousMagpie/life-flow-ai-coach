@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -400,14 +401,25 @@ app.post('/api/gpt', async (req, res) => {
 app.get('/api/ical/:userId', async (req, res) => {
   const { userId } = req.params;
 
+  // Validate that userId is provided and not empty
+  if (!userId || userId === 'undefined' || userId === 'null') {
+    return res.status(400).json({ 
+      message: 'User ID is required for calendar export',
+      error: 'Missing or invalid user ID'
+    });
+  }
+
   try {
     console.log('[ICAL REQUEST]', { userId });
 
     const timeBlocks = await timeBlocksService.getAll();
     
-    // Filter time blocks for the specific user (when proper auth is implemented)
-    // For now, we'll export all time blocks since we're using temp-user
-    const userTimeBlocks = timeBlocks.filter(block => block.user_id === userId || block.user_id === 'temp-user');
+    // Filter time blocks for the specific authenticated user only
+    const userTimeBlocks = timeBlocks.filter(block => block.user_id === userId);
+
+    if (userTimeBlocks.length === 0) {
+      console.log('[ICAL NO DATA]', { userId, message: 'No time blocks found for user' });
+    }
 
     const { CalendarGenerator } = await import('./src/lib/calendar.js');
     const icsContent = CalendarGenerator.timeBlocksToICS(userTimeBlocks);
