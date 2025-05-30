@@ -54,168 +54,6 @@ Life Flow is an intelligent life management platform that combines AI assistance
 5. **Open your browser**
    Navigate to `http://localhost:8080`
 
-## 📋 Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start the Vite development server |
-| `npm run build` | Build the project for production |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run ESLint for code quality checks |
-| `npm test` | Run the test suite with Vitest |
-| `npm run test:e2e` | Run end-to-end tests with Playwright |
-| `npm run server` | Start the Express backend server |
-
-## 🛠️ Technology Stack
-
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, shadcn/ui components
-- **Backend**: Express.js, Supabase
-- **AI Integration**: OpenAI GPT with function calling
-- **Database**: PostgreSQL (via Supabase)
-- **Authentication**: Supabase Auth
-- **Testing**: Vitest, Playwright
-- **Deployment**: Vercel (frontend), Railway/Heroku (backend)
-
-## 🏗️ Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── ui/             # Reusable UI components (shadcn/ui)
-│   ├── Dashboard.tsx   # Main dashboard
-│   ├── MealPlanner.tsx # Meal planning interface
-│   └── ...
-├── hooks/              # Custom React hooks
-├── lib/                # Utility libraries
-├── pages/              # Route components
-├── server/             # Express server code
-│   ├── gptFunctions.ts # OpenAI function definitions
-│   └── gptRouter.ts    # AI request handling
-├── services/           # Supabase service wrappers
-├── types/              # TypeScript type definitions
-└── utils/              # Helper utilities
-e2e/                    # End-to-end tests
-.github/workflows/      # CI/CD workflows
-```
-
-## 🔧 Environment Variables
-
-### Required for Development
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `VITE_SUPABASE_URL` | Your Supabase project URL | `https://xxx.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous public key | `eyJ...` |
-| `OPENAI_API_KEY` | OpenAI API key for AI features | `sk-...` |
-
-### Optional
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `5000` |
-
-## 🚢 Deployment
-
-### Vercel Deployment
-
-This project is configured for deployment on Vercel with separate environments:
-
-#### Development Deployment
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy to development environment
-vercel --prebuilt
-```
-
-#### Production Deployment
-```bash
-# Deploy to production environment
-vercel --prod
-```
-
-#### Environment Configuration
-
-1. **Vercel Dashboard Setup**:
-   - Create "Development" and "Production" environments in your Vercel project
-   - Set environment variables for each environment:
-     - `@openai_api_key` - Your OpenAI API key
-     - `@supabase_url` - Your Supabase project URL
-     - `@supabase_anon_key` - Your Supabase anonymous key
-
-2. **Environment Variables**:
-   - Development: Use development/staging Supabase project
-   - Production: Use production Supabase project
-   - Separate OpenAI API keys can be used for cost management
-
-3. **API Routes**:
-   - The `/api/gpt` endpoint is automatically configured for serverless deployment
-   - Health check available at `/health`
-
-#### Vercel Configuration
-
-The project includes a `vercel.json` file with:
-- Automatic build configuration
-- API route handling
-- Environment variable mapping
-- SPA routing support
-
-### Manual Deployment
-
-```bash
-# Build the project
-npm run build
-
-# Preview the build
-npm run preview
-```
-
-### Backend (Railway/Heroku)
-
-1. Create a new service on Railway or Heroku
-2. Connect your GitHub repository
-3. Set the `OPENAI_API_KEY` environment variable
-4. Deploy the server using the provided workflows
-
-## 🧪 Testing
-
-### Unit Tests
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-### End-to-End Tests
-```bash
-# Install Playwright browsers
-npx playwright install
-
-# Run e2e tests
-npm run test:e2e
-
-# Run e2e tests with UI
-npm run test:e2e -- --ui
-```
-
-#### E2E Test Configuration
-
-Set up environment variables for testing:
-```bash
-# .env.local (for local testing)
-TEST_EMAIL=test@example.com
-TEST_PASSWORD=testpassword123
-VITE_SUPABASE_URL=your_test_supabase_url
-VITE_SUPABASE_ANON_KEY=your_test_supabase_key
-```
-
 ## 📊 Features
 
 - **🤖 AI Assistant**: Natural language interaction with OpenAI GPT
@@ -228,6 +66,14 @@ VITE_SUPABASE_ANON_KEY=your_test_supabase_key
 - **📅 Calendar Export**: Export schedules to .ics format
 - **🔐 Authentication**: Secure user authentication via Supabase
 - **💬 Real-time Chat**: Streaming AI responses with optimistic UI
+
+## 📚 Documentation
+
+- **[Development Guide](docs/DEVELOPMENT.md)** - Development setup, scripts, and workflow
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - Project structure and technology stack
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
+- **[Testing Guide](docs/TESTING.md)** - Testing setup and best practices
+- **[Contributing](docs/CONTRIBUTING.md)** - How to contribute to the project
 
 ## 🗺️ Roadmap
 
@@ -254,18 +100,6 @@ VITE_SUPABASE_ANON_KEY=your_test_supabase_key
 - [ ] Advanced AI planning algorithms
 - [ ] Habit tracking
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🆘 Support
 
 - **Documentation**: [Lovable Docs](https://docs.lovable.dev/)
@@ -279,3 +113,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Icons by [Lucide](https://lucide.dev/)
 - Backend by [Supabase](https://supabase.com/)
 - Deployed on [Vercel](https://vercel.com/)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
