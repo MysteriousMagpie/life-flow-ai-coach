@@ -279,4 +279,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Icons by [Lucide](https://lucide.dev/)
 - Backend by [Supabase](https://supabase.com/)
 - Deployed on [Vercel](https://vercel.com/)
-
