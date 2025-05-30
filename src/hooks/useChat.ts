@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -12,7 +13,7 @@ interface Message {
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const { user } = useAuth();
 
@@ -30,7 +31,7 @@ export const useChat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
+    setIsProcessing(true);
 
     try {
       // Use the new API endpoint
@@ -79,7 +80,7 @@ export const useChat = () => {
 
       setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -90,7 +91,7 @@ export const useChat = () => {
 
   return {
     messages,
-    isLoading,
+    isProcessing,
     activeModule,
     sendMessage,
     clearMessages,
