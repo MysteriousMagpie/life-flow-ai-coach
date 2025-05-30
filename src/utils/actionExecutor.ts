@@ -1,4 +1,3 @@
-
 import { GPTAction } from './gptParser';
 import { useMeals } from '@/hooks/useMeals';
 import { useTasks } from '@/hooks/useTasks';
@@ -6,14 +5,14 @@ import { useWorkouts } from '@/hooks/useWorkouts';
 import { useReminders } from '@/hooks/useReminders';
 import { useTimeBlocks } from '@/hooks/useTimeBlocks';
 
-import { MealExecutor, ActionResult } from './executors/MealExecutor';
+import { MealExecutor } from './executors/MealExecutor';
 import { TaskExecutor } from './executors/TaskExecutor';
 import { WorkoutExecutor } from './executors/WorkoutExecutor';
 import { ReminderExecutor } from './executors/ReminderExecutor';
 import { TimeBlockExecutor } from './executors/TimeBlockExecutor';
 import { AnalysisExecutor } from './executors/AnalysisExecutor';
 
-export { ActionResult };
+export type { ActionResult } from './executors/MealExecutor';
 
 export class ActionExecutor {
   private mealExecutor: MealExecutor;

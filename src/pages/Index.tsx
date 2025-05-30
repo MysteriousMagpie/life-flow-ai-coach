@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { ChatInterface } from '@/components/ChatInterface';
 import { EnhancedDashboard } from '@/components/EnhancedDashboard';
 import { ModulePanel } from '@/components/ModulePanel';
+import { TabNavigation, TabItem } from '@/components/TabNavigation';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTabNavigation } from '@/hooks/useTabNavigation';
 import { LogOut } from 'lucide-react';
 import { MealPlanner } from '@/components/MealPlanner';
 import { WorkoutPlanner } from '@/components/WorkoutPlanner';
@@ -13,9 +15,9 @@ import { TimelineScheduler } from '@/components/TimelineScheduler';
 import { SchedulingAssistant } from '@/components/SchedulingAssistant';
 
 const Index = () => {
-  const [activeModule, setActiveModule] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const { user, signOut } = useAuth();
+  const { activeTab: activeModule, handleTabClick, setActiveTab } = useTabNavigation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -48,6 +50,33 @@ const Index = () => {
         return null;
     }
   };
+
+  const tabs: TabItem[] = [
+    {
+      id: 'calendar',
+      label: 'Calendar View',
+      icon: '📅',
+      description: 'Comprehensive calendar with all your activities'
+    },
+    {
+      id: 'timeline',
+      label: 'Timeline Scheduler',
+      icon: '⏰',
+      description: 'Visual time blocking and scheduling'
+    },
+    {
+      id: 'scheduling',
+      label: 'Scheduling Assistant',
+      icon: '🧠',
+      description: 'AI-powered scheduling optimization'
+    },
+    {
+      id: 'meals',
+      label: 'Meal Planner',
+      icon: '🍽️',
+      description: 'Plan your weekly meals efficiently'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -86,7 +115,7 @@ const Index = () => {
             <ChatInterface 
               conversations={conversations}
               setConversations={setConversations}
-              setActiveModule={setActiveModule}
+              setActiveModule={setActiveTab}
             />
           </div>
 
@@ -107,53 +136,20 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Calendar Integration Section */}
-        {!activeModule && (
-          <div className="mt-8 space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-2">Calendar & Scheduling Tools</h2>
-              <p className="text-gray-600">Advanced scheduling features for better life planning</p>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-blue-300"
-                onClick={() => setActiveModule('calendar')}
-              >
-                <span className="text-lg font-medium">📅 Calendar View</span>
-                <span className="text-sm text-gray-600">Comprehensive calendar with all your activities</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-purple-300"
-                onClick={() => setActiveModule('timeline')}
-              >
-                <span className="text-lg font-medium">⏰ Timeline Scheduler</span>
-                <span className="text-sm text-gray-600">Visual time blocking and scheduling</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-green-300"
-                onClick={() => setActiveModule('scheduling')}
-              >
-                <span className="text-lg font-medium">🧠 Scheduling Assistant</span>
-                <span className="text-sm text-gray-600">AI-powered scheduling optimization</span>
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 border-2 hover:border-orange-300"
-                onClick={() => setActiveModule('meals')}
-              >
-                <span className="text-lg font-medium">🍽️ Meal Planner</span>
-                <span className="text-sm text-gray-600">Plan your weekly meals efficiently</span>
-              </Button>
-            </div>
+        {/* Tab Navigation Section */}
+        <div className="mt-8 space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Calendar & Scheduling Tools</h2>
+            <p className="text-gray-600">Advanced scheduling features for better life planning</p>
           </div>
-        )}
+          
+          <TabNavigation
+            tabs={tabs}
+            activeTab={activeModule}
+            onTabClick={handleTabClick}
+            className="max-w-4xl mx-auto"
+          />
+        </div>
       </div>
     </div>
   );
