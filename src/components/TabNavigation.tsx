@@ -60,7 +60,7 @@ export const TabNavigation = ({
 
   if (variant === 'compact') {
     return (
-      <div className={cn("flex flex-wrap gap-2", className)}>
+      <div className={cn("flex flex-wrap gap-2 overflow-x-auto", className)}>
         {tabsToRender.map((tab) => (
           <Button
             key={tab.id}
@@ -68,12 +68,12 @@ export const TabNavigation = ({
             size="sm"
             onClick={() => handleTabClick(tab.id)}
             className={cn(
-              "flex items-center space-x-2 transition-all duration-200",
+              "flex items-center space-x-2 transition-all duration-200 flex-shrink-0 text-xs sm:text-sm",
               currentActiveTab === tab.id && "bg-primary text-primary-foreground shadow-md"
             )}
           >
             <span>{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span className="hidden xs:inline sm:inline">{tab.label}</span>
           </Button>
         ))}
       </div>
@@ -81,22 +81,22 @@ export const TabNavigation = ({
   }
 
   return (
-    <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-6", className)}>
+    <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6", className)}>
       {tabsToRender.map((tab) => (
         <Button
           key={tab.id}
           variant="outline"
           onClick={() => handleTabClick(tab.id)}
           className={cn(
-            "h-20 flex flex-col items-center justify-center space-y-2 border-2 transition-all duration-200 hover:scale-[1.02]",
+            "h-16 sm:h-20 flex flex-col items-center justify-center space-y-1 sm:space-y-2 border-2 transition-all duration-200 hover:scale-[1.02] w-full",
             currentActiveTab === tab.id 
               ? "border-primary bg-primary/5 shadow-lg scale-[1.02]" 
               : "hover:border-primary/50"
           )}
         >
-          <span className="text-lg font-medium">{tab.icon} {tab.label}</span>
+          <span className="text-sm sm:text-lg font-medium">{tab.icon} {tab.label}</span>
           {tab.description && (
-            <span className="text-sm text-gray-600">{tab.description}</span>
+            <span className="text-xs sm:text-sm text-gray-600 text-center px-2">{tab.description}</span>
           )}
         </Button>
       ))}

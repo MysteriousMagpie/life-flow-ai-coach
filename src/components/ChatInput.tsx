@@ -44,21 +44,21 @@ export const ChatInput = ({ onSubmit, isProcessing }: ChatInputProps) => {
   }, [isProcessing]);
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t bg-gray-50/80">
-      <div className="flex space-x-2">
+    <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t bg-gray-50/80">
+      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
         <Input
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={user ? "Tell me what you'd like to plan or improve..." : "Please log in to use the AI assistant"}
-          className="flex-1 border-gray-200 focus:border-blue-500 transition-colors"
+          className="w-full border-gray-200 focus:border-blue-500 transition-colors text-sm"
           disabled={isProcessing || !user}
         />
         <Button 
           type="submit" 
           disabled={isProcessing || !input.trim() || !user}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all"
+          className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 transition-all text-sm"
         >
           {isProcessing ? (
             <Loader2 className="w-4 h-4 animate-spin" />

@@ -52,6 +52,7 @@ describe('Authentication Tests', () => {
 
     it('should throw error when creating meal without authentication', async () => {
       const mealData = {
+        user_id: 'test-user-id',
         name: 'Test Meal',
         meal_type: 'breakfast',
         planned_date: '2024-01-01'
@@ -61,6 +62,7 @@ describe('Authentication Tests', () => {
 
     it('should throw error when creating task without authentication', async () => {
       const taskData = {
+        user_id: 'test-user-id',
         title: 'Test Task',
         description: 'Test Description'
       };
@@ -69,14 +71,16 @@ describe('Authentication Tests', () => {
 
     it('should throw error when creating workout without authentication', async () => {
       const workoutData = {
+        user_id: 'test-user-id',
         name: 'Test Workout',
-        shceduled_date: '2024-01-01'
+        scheduled_date: '2024-01-01'
       };
       await expect(workoutsService.create(workoutData)).rejects.toThrow('User not authenticated');
     });
 
     it('should throw error when creating reminder without authentication', async () => {
       const reminderData = {
+        user_id: 'test-user-id',
         title: 'Test Reminder',
         due_date: '2024-01-01T12:00:00Z'
       };
@@ -85,6 +89,7 @@ describe('Authentication Tests', () => {
 
     it('should throw error when creating time block without authentication', async () => {
       const timeBlockData = {
+        user_id: 'test-user-id',
         title: 'Test Time Block',
         start_time: '2024-01-01T10:00:00Z',
         end_time: '2024-01-01T11:00:00Z'
@@ -94,7 +99,14 @@ describe('Authentication Tests', () => {
   });
 
   describe('Authenticated requests should work', () => {
-    const mockUser = { id: 'test-user-id' };
+    const mockUser = { 
+      id: 'test-user-id',
+      app_metadata: {},
+      user_metadata: {},
+      aud: 'authenticated',
+      created_at: '2024-01-01T00:00:00Z',
+      email: 'test@example.com'
+    };
 
     beforeEach(() => {
       // Mock authenticated user
