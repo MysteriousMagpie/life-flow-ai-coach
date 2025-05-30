@@ -1,8 +1,10 @@
+
 {
   "name": "life-flow-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@8.15.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

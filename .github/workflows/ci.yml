@@ -19,17 +19,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            client/package-lock.json
 
-      - name: Install root dependencies
-        run: npm ci
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('client/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install client dependencies
         working-directory: ./client
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
         working-directory: ./client
@@ -37,7 +43,7 @@ jobs:
 
       - name: Build client application
         working-directory: ./client
-        run: npm run build
+        run: pnpm run build
 
       - name: Run E2E tests
         working-directory: ./client
@@ -45,7 +51,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: npm run test:e2e
+        run: pnpm run test:e2e
 
       - name: Upload test results
         uses: actions/upload-artifact@v4

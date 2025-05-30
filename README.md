@@ -12,6 +12,17 @@ This repository is split into client and server components:
 
 ## Quick Start
 
+### Prerequisites
+
+Make sure you have pnpm installed:
+```bash
+# Enable corepack (recommended)
+corepack enable
+
+# Or install pnpm globally
+npm install -g pnpm@8.15.0
+```
+
 ### Frontend (Client)
 
 1. Navigate to the client directory:
@@ -21,7 +32,7 @@ This repository is split into client and server components:
 
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. Copy environment variables:
@@ -38,7 +49,7 @@ This repository is split into client and server components:
 
 5. Start the development server:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 The client will be available at `http://localhost:5173`
@@ -77,7 +88,7 @@ The API server will be available at `http://localhost:3000`
 ## Development Workflow
 
 1. Start the backend server from the `/server` directory
-2. Start the frontend development server from the `/client` directory
+2. Start the frontend development server from the `/client` directory using pnpm
 3. The frontend will make API requests to the backend
 
 ## Deployment
@@ -154,6 +165,7 @@ Make sure to set your `SUPABASE_SERVICE_ROLE_KEY` environment variable before ru
 - Shadcn/ui components
 - React Query for state management
 - React Router for navigation
+- Package management with pnpm
 
 ### Backend
 - Express.js
@@ -165,7 +177,7 @@ Make sure to set your `SUPABASE_SERVICE_ROLE_KEY` environment variable before ru
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Test thoroughly with `pnpm run test:e2e` (from client directory)
 5. Submit a pull request
 
 ## License

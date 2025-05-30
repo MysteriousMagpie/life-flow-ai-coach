@@ -5,14 +5,16 @@
 
 ### Running Tests
 ```bash
+# From /client directory
+
 # Run all tests
-npm test
+pnpm test
 
 # Run tests in watch mode
-npm run test:watch
+pnpm run test:watch
 
 # Run tests with coverage
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 ### Test Structure
@@ -24,21 +26,26 @@ npm run test:coverage
 
 ### Setup
 ```bash
+# From /client directory
+
+# Install dependencies (includes Playwright)
+pnpm install
+
 # Install Playwright browsers
 npx playwright install
 
 # Run e2e tests
-npm run test:e2e
+pnpm run test:e2e
 
 # Run e2e tests with UI
-npm run test:e2e -- --ui
+pnpm run test:e2e -- --ui
 ```
 
 ### E2E Test Configuration
 
 Set up environment variables for testing:
 ```bash
-# .env.local (for local testing)
+# .env.local (for local testing in /client directory)
 TEST_EMAIL=test@example.com
 TEST_PASSWORD=testpassword123
 VITE_SUPABASE_URL=your_test_supabase_url
@@ -65,4 +72,19 @@ Current E2E tests cover:
 Tests run automatically on:
 - Every push to main branch
 - Every pull request
-- Uses GitHub Actions with proper environment secrets
+- Uses GitHub Actions with pnpm for faster CI builds
+- Includes pnpm caching for improved performance
+
+### CI Environment
+
+The CI pipeline uses:
+- pnpm@8 for package management
+- Node.js 18
+- Playwright for E2E testing
+- Proper environment secrets for testing
+
+## Package Management in Tests
+
+- Use `pnpm install --frozen-lockfile` for deterministic installs
+- Playwright browsers are cached across CI runs
+- Dependencies are installed only in the client directory for frontend tests
