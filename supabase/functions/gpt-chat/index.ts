@@ -60,9 +60,11 @@ serve(async (req) => {
     let conversationMessages: any[] = []
     
     // Handle both legacy single message and new messages array format
-    if (messages && Array.isArray(messages)) {
+    // Check if messages array exists and has content
+    if (messages && Array.isArray(messages) && messages.length > 0) {
       conversationMessages = messages
-    } else if (message) {
+    } else {
+      // For first message or when messages array is empty, create new conversation
       conversationMessages = [
         {
           role: "system",
