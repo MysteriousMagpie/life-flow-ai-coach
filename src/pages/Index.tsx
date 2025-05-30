@@ -1,157 +1,60 @@
 
 import React, { useState } from 'react';
-import { ChatInterface } from '@/components/ChatInterface';
-import { EnhancedDashboard } from '@/components/EnhancedDashboard';
-import { ModulePanel } from '@/components/ModulePanel';
-import { TabNavigation, TabItem } from '@/components/TabNavigation';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTabNavigation } from '@/hooks/useTabNavigation';
-import { LogOut } from 'lucide-react';
+import { Dashboard } from '@/components/Dashboard';
 import { MealPlanner } from '@/components/MealPlanner';
+import { TaskManager } from '@/components/TaskManager';
 import { WorkoutPlanner } from '@/components/WorkoutPlanner';
-import { CalendarView } from '@/components/CalendarView';
-import { TimelineScheduler } from '@/components/TimelineScheduler';
-import { SchedulingAssistant } from '@/components/SchedulingAssistant';
+import { ReminderCenter } from '@/components/ReminderCenter';
+import { TimeBlockScheduler } from '@/components/TimeBlockScheduler';
+import { ChatInterface } from '@/components/ChatInterface';
+import { TabNavigation } from '@/components/TabNavigation';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 const Index = () => {
-  const [conversations, setConversations] = useState<any[]>([]);
-  const { user, signOut } = useAuth();
-  const { activeTab: activeModule, handleTabClick, setActiveTab } = useTabNavigation();
+  const [activeModule, setActiveModule] = useState('dashboard');
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    // Add the suggestion as a user message to trigger AI processing
-    const userMessage = {
-      id: Date.now(),
-      type: 'user',
-      content: suggestion,
-      timestamp: new Date()
-    };
-    setConversations(prev => [...prev, userMessage]);
-  };
-
-  const renderActiveModule = () => {
+  const renderModule = () => {
     switch (activeModule) {
+      case 'dashboard':
+        return <Dashboard />;
       case 'meals':
         return <MealPlanner />;
+      case 'tasks':
+        return <TaskManager />;
       case 'workouts':
         return <WorkoutPlanner />;
-      case 'calendar':
-        return <CalendarView />;
-      case 'timeline':
-        return <TimelineScheduler />;
-      case 'scheduling':
-        return <SchedulingAssistant />;
+      case 'reminders':
+        return <ReminderCenter />;
+      case 'schedule':
+        return <TimeBlockScheduler />;
+      case 'chat':
+        return <ChatInterface />;
       default:
-        return null;
+        return <Dashboard />;
     }
   };
 
-  const tabs: TabItem[] = [
-    {
-      id: 'calendar',
-      label: 'Calendar View',
-      icon: '📅',
-      description: 'Comprehensive calendar with all your activities'
-    },
-    {
-      id: 'timeline',
-      label: 'Timeline Scheduler',
-      icon: '⏰',
-      description: 'Visual time blocking and scheduling'
-    },
-    {
-      id: 'scheduling',
-      label: 'Scheduling Assistant',
-      icon: '🧠',
-      description: 'AI-powered scheduling optimization'
-    },
-    {
-      id: 'meals',
-      label: 'Meal Planner',
-      icon: '🍽️',
-      description: 'Plan your weekly meals efficiently'
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="container mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="text-center mb-8 relative">
-          <div className="absolute top-0 right-0">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Welcome, {user?.email}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </Button>
-            </div>
-          </div>
-          
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            LifePlan AI
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Your intelligent life planning assistant with advanced calendar integration
-          </p>
-        </div>
-
-        {/* Main Interface */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {/* Chat Interface */}
-          <div className="lg:col-span-2">
-            <ChatInterface 
-              conversations={conversations}
-              setConversations={setConversations}
-              setActiveModule={setActiveTab}
-            />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">
+              Life Flow AI Coach
+            </h1>
+            <p className="text-gray-600 text-center max-w-2xl mx-auto">
+              Your intelligent companion for meal planning, task management, workout tracking, and life optimization
+            </p>
           </div>
 
-          {/* Enhanced Module Display */}
-          {activeModule && (
-            <div className="lg:col-span-2 mt-6">
-              {renderActiveModule()}
-            </div>
-          )}
+          <TabNavigation activeModule={activeModule} setActiveModule={setActiveModule} />
 
-          {/* Enhanced Dashboard */}
-          <div className="space-y-6">
-            <EnhancedDashboard 
-              activeModule={activeModule} 
-              onSuggestionClick={handleSuggestionClick}
-            />
-            <ModulePanel activeModule={activeModule} />
+          <div className="mt-8">
+            {renderModule()}
           </div>
-        </div>
-
-        {/* Tab Navigation Section */}
-        <div className="mt-8 space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Calendar & Scheduling Tools</h2>
-            <p className="text-gray-600">Advanced scheduling features for better life planning</p>
-          </div>
-          
-          <TabNavigation
-            tabs={tabs}
-            activeTab={activeModule}
-            onTabClick={handleTabClick}
-            className="max-w-4xl mx-auto"
-          />
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 

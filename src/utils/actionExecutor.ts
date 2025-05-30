@@ -1,86 +1,72 @@
 
-import { GPTAction } from './gptParser';
-import { useMeals } from '@/hooks/useMeals';
-import { useTasks } from '@/hooks/useTasks';
-import { useWorkouts } from '@/hooks/useWorkouts';
-import { useReminders } from '@/hooks/useReminders';
-import { useTimeBlocks } from '@/hooks/useTimeBlocks';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-import { MealExecutor, ActionResult } from './executors/MealExecutor';
-import { TaskExecutor } from './executors/TaskExecutor';
-import { WorkoutExecutor } from './executors/WorkoutExecutor';
-import { ReminderExecutor } from './executors/ReminderExecutor';
-import { TimeBlockExecutor } from './executors/TimeBlockExecutor';
-import { AnalysisExecutor } from './executors/AnalysisExecutor';
-
-export type { ActionResult } from './executors/MealExecutor';
+export interface GPTAction {
+  type: 'addMeal' | 'addTask' | 'addWorkout' | 'addReminder' | 'addTimeBlock';
+  payload: any;
+}
 
 export class ActionExecutor {
-  private mealExecutor: MealExecutor;
-  private taskExecutor: TaskExecutor;
-  private workoutExecutor: WorkoutExecutor;
-  private reminderExecutor: ReminderExecutor;
-  private timeBlockExecutor: TimeBlockExecutor;
-  private analysisExecutor: AnalysisExecutor;
+  private toast: any;
+  private meals: any;
+  private tasks: any;
+  private workouts: any;
+  private reminders: any;
+  private timeBlocks: any;
 
   constructor(hooks: {
-    meals: ReturnType<typeof useMeals>;
-    tasks: ReturnType<typeof useTasks>;
-    workouts: ReturnType<typeof useWorkouts>;
-    reminders: ReturnType<typeof useReminders>;
-    timeBlocks: ReturnType<typeof useTimeBlocks>;
+    meals: any;
+    tasks: any;
+    workouts: any;
+    reminders: any;
+    timeBlocks: any;
   }) {
-    this.mealExecutor = new MealExecutor(hooks.meals);
-    this.taskExecutor = new TaskExecutor(hooks.tasks);
-    this.workoutExecutor = new WorkoutExecutor(hooks.workouts);
-    this.reminderExecutor = new ReminderExecutor(hooks.reminders);
-    this.timeBlockExecutor = new TimeBlockExecutor(hooks.timeBlocks);
-    this.analysisExecutor = new AnalysisExecutor(
-      this.mealExecutor,
-      this.workoutExecutor,
-      this.timeBlockExecutor
-    );
+    this.meals = hooks.meals;
+    this.tasks = hooks.tasks;
+    this.workouts = hooks.workouts;
+    this.reminders = hooks.reminders;
+    this.timeBlocks = hooks.timeBlocks;
   }
 
-  async executeActions(actions: GPTAction[], userId: string): Promise<ActionResult[]> {
-    const results: ActionResult[] = [];
-
+  async executeActions(actions: GPTAction[], userId: string): Promise<any[]> {
+    const results = [];
+    
     for (const action of actions) {
       try {
         const result = await this.executeAction(action, userId);
-        results.push(result);
+        results.push({ action: action.type, success: true, result });
       } catch (error) {
-        console.error('Action execution error:', error);
-        results.push({
-          success: false,
-          message: `Failed to execute ${action.functionName || action.type} ${action.module}`,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          functionName: action.functionName
-        });
+        console.error(`Failed to execute action ${action.type}:`, error);
+        results.push({ action: action.type, success: false, error: error.message });
       }
     }
-
+    
     return results;
   }
 
-  private async executeAction(action: GPTAction, userId: string): Promise<ActionResult> {
-    const dataWithUserId = action.data ? { ...action.data, user_id: userId } : { user_id: userId };
+  private async executeAction(action: GPTAction, userId: string): Promise<any> {
+    // Add user_id to payload for all actions
+    const payloadWithUser = { ...action.payload, user_id: userId };
 
-    switch (action.module) {
-      case 'meals':
-        return this.mealExecutor.executeAction(action, dataWithUserId);
-      case 'tasks':
-        return this.taskExecutor.executeAction(action, dataWithUserId);
-      case 'workouts':
-        return this.workoutExecutor.executeAction(action, dataWithUserId);
-      case 'reminders':
-        return this.reminderExecutor.executeAction(action, dataWithUserId);
-      case 'time_blocks':
-        return this.timeBlockExecutor.executeAction(action, dataWithUserId);
-      case 'analysis':
-        return this.analysisExecutor.executeAction(action, dataWithUserId);
+    switch (action.type) {
+      case 'addMeal':
+        return this.meals.createMeal(payloadWithUser);
+      
+      case 'addTask':
+        return this.tasks.createTask(payloadWithUser);
+      
+      case 'addWorkout':
+        return this.workouts.createWorkout(payloadWithUser);
+      
+      case 'addReminder':
+        return this.reminders.createReminder(payloadWithUser);
+      
+      case 'addTimeBlock':
+        return this.timeBlocks.createTimeBlock(payloadWithUser);
+      
       default:
-        throw new Error(`Unknown module: ${action.module}`);
+        throw new Error(`Unknown action type: ${action.type}`);
     }
   }
 }
