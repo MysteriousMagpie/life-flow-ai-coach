@@ -19,6 +19,7 @@ export const useTimeBlocks = () => {
   } = useQuery({
     queryKey: ['timeBlocks'],
     queryFn: timeBlocksService.getAll,
+    enabled: !!user, // Only fetch when user is authenticated
   });
 
   // Set up realtime subscription

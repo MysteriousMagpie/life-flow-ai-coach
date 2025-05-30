@@ -9,11 +9,35 @@ import { TimeBlockScheduler } from '@/components/TimeBlockScheduler';
 import { ChatInterface } from '@/components/ChatInterface';
 import { TabNavigation } from '@/components/TabNavigation';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
+  const { user, loading } = useAuth();
 
   const renderModule = () => {
+    // Show loading state while checking auth
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center min-h-[300px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Show unauthenticated message if no user
+    if (!user) {
+      return (
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Log In</h2>
+          <p className="text-gray-600 mb-6">You need to be logged in to access this application.</p>
+        </div>
+      );
+    }
+
     switch (activeModule) {
       case 'dashboard':
         return <Dashboard activeModule={activeModule} />;

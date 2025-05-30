@@ -3,12 +3,34 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardProps {
   activeModule?: string | null;
 }
 
 export const Dashboard = ({ activeModule }: DashboardProps) => {
+  const { user, loading } = useAuth();
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Show unauthenticated message
+  if (!user) {
+    return (
+      <Card className="p-6 text-center">
+        <h3 className="text-lg font-semibold mb-2">Please Log In</h3>
+        <p className="text-gray-600">You need to be logged in to view your dashboard.</p>
+      </Card>
+    );
+  }
+
   const todayStats = {
     meals: { planned: 3, completed: 1 },
     workouts: { planned: 1, completed: 0 },

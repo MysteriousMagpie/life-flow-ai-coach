@@ -19,6 +19,7 @@ export const useWorkouts = () => {
   } = useQuery({
     queryKey: ['workouts'],
     queryFn: workoutsService.getAll,
+    enabled: !!user, // Only fetch when user is authenticated
   });
 
   // Set up realtime subscription

@@ -19,6 +19,7 @@ export const useMeals = () => {
   } = useQuery({
     queryKey: ['meals'],
     queryFn: mealsService.getAll,
+    enabled: !!user, // Only fetch when user is authenticated
   });
 
   // Set up realtime subscription
@@ -115,13 +116,13 @@ export const useMeals = () => {
   const useMealsByDate = (date: string) => useQuery({
     queryKey: ['meals', 'date', date],
     queryFn: () => mealsService.getByDate(date),
-    enabled: !!date,
+    enabled: !!date && !!user,
   });
 
   const useMealsByDateRange = (startDate: string, endDate: string) => useQuery({
     queryKey: ['meals', 'dateRange', startDate, endDate],
     queryFn: () => mealsService.getByDateRange(startDate, endDate),
-    enabled: !!startDate && !!endDate,
+    enabled: !!startDate && !!endDate && !!user,
   });
 
   return {
