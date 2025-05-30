@@ -4,9 +4,13 @@ import { TimeBlock, CreateTimeBlock, UpdateTimeBlock } from '@/types/database';
 
 export const timeBlocksService = {
   async getAll(): Promise<TimeBlock[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('time_blocks')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
@@ -25,9 +29,14 @@ export const timeBlocksService = {
   },
 
   async create(timeBlock: CreateTimeBlock): Promise<TimeBlock> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const timeBlockWithUserId = { ...timeBlock, user_id: user.id };
+    
     const { data, error } = await supabase
       .from('time_blocks')
-      .insert(timeBlock)
+      .insert(timeBlockWithUserId)
       .select()
       .single();
     

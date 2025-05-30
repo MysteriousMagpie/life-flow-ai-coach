@@ -4,9 +4,13 @@ import { Workout, CreateWorkout, UpdateWorkout } from '@/types/database';
 
 export const workoutsService = {
   async getAll(): Promise<Workout[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('workouts')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
@@ -25,9 +29,13 @@ export const workoutsService = {
   },
 
   async getByDateRange(startDate: string, endDate: string): Promise<Workout[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('workouts')
       .select('*')
+      .eq('user_id', user.id)
       .gte('shceduled_date', startDate)
       .lte('shceduled_date', endDate)
       .order('shceduled_date', { ascending: true });
@@ -37,9 +45,14 @@ export const workoutsService = {
   },
 
   async create(workout: CreateWorkout): Promise<Workout> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const workoutWithUserId = { ...workout, user_id: user.id };
+    
     const { data, error } = await supabase
       .from('workouts')
-      .insert(workout)
+      .insert(workoutWithUserId)
       .select()
       .single();
     

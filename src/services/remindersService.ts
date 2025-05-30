@@ -4,9 +4,13 @@ import { Reminder, CreateReminder, UpdateReminder } from '@/types/database';
 
 export const remindersService = {
   async getAll(): Promise<Reminder[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('reminders')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
@@ -25,9 +29,14 @@ export const remindersService = {
   },
 
   async create(reminder: CreateReminder): Promise<Reminder> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const reminderWithUserId = { ...reminder, user_id: user.id };
+    
     const { data, error } = await supabase
       .from('reminders')
-      .insert(reminder)
+      .insert(reminderWithUserId)
       .select()
       .single();
     
