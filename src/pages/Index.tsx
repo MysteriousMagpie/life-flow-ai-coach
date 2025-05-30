@@ -16,7 +16,7 @@ const Index = () => {
   const renderModule = () => {
     switch (activeModule) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard activeModule={activeModule} />;
       case 'meals':
         return <MealPlanner />;
       case 'tasks':
@@ -30,7 +30,7 @@ const Index = () => {
       case 'chat':
         return <ChatInterface />;
       default:
-        return <Dashboard />;
+        return <Dashboard activeModule={activeModule} />;
     }
   };
 

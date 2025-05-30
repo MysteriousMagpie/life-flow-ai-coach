@@ -9,7 +9,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  status?: 'streaming' | 'done';
+  status?: 'sending' | 'streaming' | 'done' | 'error';
   actionResults?: any[];
 }
 

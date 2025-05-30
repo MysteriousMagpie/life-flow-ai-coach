@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 
 interface DashboardProps {
-  activeModule: string | null;
+  activeModule?: string | null;
 }
 
 export const Dashboard = ({ activeModule }: DashboardProps) => {
