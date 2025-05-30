@@ -20,20 +20,30 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            client/package-lock.json
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install client dependencies
+        working-directory: ./client
         run: npm ci
 
       - name: Install Playwright browsers
+        working-directory: ./client
         run: npx playwright install --with-deps
 
-      - name: Build application
+      - name: Build client application
+        working-directory: ./client
         run: npm run build
 
       - name: Run E2E tests
+        working-directory: ./client
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: npm run test:e2e
 
@@ -42,7 +52,7 @@ jobs:
         if: failure()
         with:
           name: playwright-report
-          path: playwright-report/
+          path: client/playwright-report/
           retention-days: 30
 
       - name: Test Summary
