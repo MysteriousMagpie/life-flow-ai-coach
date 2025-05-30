@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { getGptResponseWithFunctions } from './src/server/gptRouter';
+import OpenAI from 'openai';
+import { gptFunctions } from './src/server/gptFunctions';
+import { parseFunctionCall } from './src/server/gptRouter';
 import { gptParser } from './src/utils/gptParser';
 import { ActionExecutor } from './src/utils/actionExecutor';
 import { mealsService } from './src/services/mealsService';
@@ -17,6 +19,10 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 // Backend action executor that uses services directly
 const backendActionExecutor = {
@@ -231,7 +237,7 @@ const backendActionExecutor = {
 };
 
 app.post('/api/gpt', async (req, res) => {
-  const { message, userId } = req.body;
+  const { message, messages, userId } = req.body;
 
   if (!process.env.OPENAI_API_KEY) {
     return res.status(500).json({ 
@@ -242,9 +248,9 @@ app.post('/api/gpt', async (req, res) => {
     });
   }
 
-  if (!message || !userId) {
+  if (!userId) {
     return res.status(400).json({
-      message: 'Missing required fields: message and userId',
+      message: 'Missing required field: userId',
       actions: [],
       actionResults: [],
       activeModule: null
@@ -252,38 +258,125 @@ app.post('/api/gpt', async (req, res) => {
   }
 
   try {
-    console.log('[GPT REQUEST]', { message, userId });
+    console.log('[GPT REQUEST]', { message, userId, messagesCount: messages?.length });
 
-    // Use gptParser to process the input and get structured response
-    const parsedResponse = await gptParser.processInput(message);
-    console.log('[GPT PARSED]', { 
-      message: parsedResponse.message.substring(0, 100) + '...', 
-      actionsCount: parsedResponse.actions.length 
-    });
-
-    // Execute actions if any
-    let actionResults = [];
-    if (parsedResponse.actions && parsedResponse.actions.length > 0) {
-      console.log('[EXECUTING ACTIONS]', parsedResponse.actions);
-      actionResults = await backendActionExecutor.executeActions(parsedResponse.actions, userId);
-      console.log('[ACTION RESULTS]', actionResults);
+    let conversationMessages: OpenAI.ChatCompletionMessageParam[] = [];
+    
+    // Handle both legacy single message and new messages array format
+    if (messages && Array.isArray(messages)) {
+      conversationMessages = messages;
+    } else if (message) {
+      conversationMessages = [
+        {
+          role: "system",
+          content: "You are a helpful life planning assistant. Use the provided functions to help users organize their meals, workouts, tasks, reminders, and schedule. Be conversational and helpful."
+        },
+        { role: "user", content: message }
+      ];
     }
 
-    const response = {
-      message: parsedResponse.message,
-      actions: parsedResponse.actions || [],
-      actionResults,
-      activeModule: parsedResponse.activeModule
-    };
+    const executedActions: any[] = [];
+    const maxIterations = 10; // Prevent infinite loops
+    let iterations = 0;
 
-    console.log('[GPT RESPONSE]', { 
-      message: response.message.substring(0, 100) + '...', 
-      actionsCount: response.actions.length,
-      resultsCount: actionResults.length,
-      activeModule: response.activeModule
+    // Recursive function calling loop
+    while (iterations < maxIterations) {
+      console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: conversationMessages.length });
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: conversationMessages,
+        functions: gptFunctions.map(func => ({
+          name: func.name,
+          description: func.description,
+          parameters: func.parameters
+        })),
+        function_call: "auto",
+        temperature: 0.7
+      });
+
+      const assistantMessage = completion.choices[0].message;
+      
+      // Add assistant message to conversation
+      conversationMessages.push({
+        role: "assistant",
+        content: assistantMessage.content,
+        function_call: assistantMessage.function_call
+      });
+
+      // Check if there's a function call to execute
+      if (assistantMessage.function_call) {
+        try {
+          const functionName = assistantMessage.function_call.name;
+          const args = JSON.parse(assistantMessage.function_call.arguments || '{}');
+          
+          console.log(`[FUNCTION CALL] ${functionName}`, args);
+          
+          // Execute the function call
+          const result = await parseFunctionCall(functionName, args);
+          
+          // Track the executed action
+          executedActions.push({
+            function: functionName,
+            arguments: args,
+            result: result
+          });
+
+          // Add function result to conversation
+          conversationMessages.push({
+            role: "function",
+            name: functionName,
+            content: JSON.stringify(result)
+          });
+
+          console.log(`[FUNCTION RESULT] ${functionName}`, { success: result.success });
+        } catch (functionError) {
+          console.error('[FUNCTION EXECUTION ERROR]', functionError);
+          
+          // Add error to conversation so GPT can handle it
+          conversationMessages.push({
+            role: "function",
+            name: assistantMessage.function_call.name,
+            content: JSON.stringify({
+              success: false,
+              error: functionError instanceof Error ? functionError.message : 'Unknown error'
+            })
+          });
+        }
+        
+        iterations++;
+        continue; // Continue the loop for next GPT call
+      } else {
+        // No more function calls, we're done
+        console.log('[GPT COMPLETE]', { iterations, actionsExecuted: executedActions.length });
+        
+        const response = {
+          message: assistantMessage.content || "I'm here to help you plan your life better!",
+          actions: executedActions,
+          actionResults: executedActions.map(action => action.result),
+          activeModule: null // Could be enhanced to detect active module
+        };
+
+        console.log('[GPT RESPONSE]', { 
+          message: response.message?.substring(0, 100) + '...', 
+          actionsCount: response.actions.length,
+          resultsCount: response.actionResults.length
+        });
+
+        return res.json(response);
+      }
+    }
+
+    // If we hit max iterations, return what we have
+    console.log('[GPT MAX ITERATIONS REACHED]', { iterations, actionsExecuted: executedActions.length });
+    
+    return res.json({
+      message: "I've completed the requested actions, though the conversation may have been truncated due to complexity.",
+      actions: executedActions,
+      actionResults: executedActions.map(action => action.result),
+      activeModule: null
     });
 
-    res.json(response);
   } catch (error) {
     console.error('[GPT ERROR]', error);
     
