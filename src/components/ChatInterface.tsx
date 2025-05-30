@@ -56,10 +56,41 @@ export const ChatInterface = ({ conversations, setConversations, setActiveModule
       content: input,
       timestamp: new Date()
     };
-
-    setConversations([...conversations, userMessage]);
-    setInput('');
+    // Add the user's message to the local chat history (if you're displaying it)
+    setConversations((prev) => [...prev, userMessage]);
+    setInput("");
     setIsProcessing(true);
+
+    // Send the message to your GPT backend
+    try {
+      const response = await fetch("http://localhost:5000/api/gpt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: input,
+        }),
+      });
+
+      const data = await response.json();
+
+      // Add GPT's response to the chat (this assumes your backend returns `content`)
+      const assistantMessage = {
+        id: Date.now() + 1,
+        type: 'assistant',
+        content: data.message ?? '[no response]',
+        timestamp: new Date()
+      };
+
+      setConversations((prev) => [...prev, assistantMessage]);
+    } catch (err) {
+      console.error("GPT API error:", err);
+      // Optional: show error message in UI
+    } finally {
+      setIsProcessing(false);
+    }
+
 
     try {
       console.log('[CHAT] Processing input:', input);
