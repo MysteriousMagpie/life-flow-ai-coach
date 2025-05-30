@@ -5,33 +5,32 @@ import { Loader2 } from 'lucide-react';
 import { ActionResultsDisplay } from './ActionResultsDisplay';
 
 interface Message {
-  id: number;
-  role: 'user' | 'assistant' | 'system';
+  id: string;
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  actions?: any[];
+  status?: 'streaming' | 'done';
   actionResults?: any[];
-  error?: boolean;
 }
 
 interface MessageListProps {
-  conversations: Message[];
+  messages: Message[];
   isProcessing: boolean;
 }
 
-export const MessageList = ({ conversations, isProcessing }: MessageListProps) => {
+export const MessageList = ({ messages, isProcessing }: MessageListProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [conversations, isProcessing]);
+  }, [messages, isProcessing]);
 
   return (
     <ScrollArea className="flex-1 p-4" ref={scrollRef}>
       <div className="space-y-4">
-        {conversations.length === 0 && (
+        {messages.length === 0 && (
           <div className="text-center py-8">
             <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-6 mb-4">
               <h3 className="font-semibold text-gray-800 mb-2">Try saying:</h3>
@@ -47,7 +46,7 @@ export const MessageList = ({ conversations, isProcessing }: MessageListProps) =
           </div>
         )}
         
-        {conversations.map((message) => (
+        {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -56,12 +55,15 @@ export const MessageList = ({ conversations, isProcessing }: MessageListProps) =
               className={`max-w-[80%] rounded-lg p-3 ${
                 message.role === 'user'
                   ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
-                  : message.error 
-                  ? 'bg-red-100 text-red-800 border border-red-200'
                   : 'bg-gray-100 text-gray-800'
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {message.content}
+                {message.status === 'streaming' && (
+                  <span className="inline-block w-2 h-4 bg-gray-400 ml-1 animate-pulse" />
+                )}
+              </p>
               
               {/* Render action results */}
               {message.actionResults && message.actionResults.length > 0 && (
@@ -75,7 +77,7 @@ export const MessageList = ({ conversations, isProcessing }: MessageListProps) =
           </div>
         ))}
         
-        {isProcessing && (
+        {isProcessing && messages.length > 0 && !messages[messages.length - 1]?.content && (
           <div className="flex justify-start">
             <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
               <div className="flex items-center space-x-2">

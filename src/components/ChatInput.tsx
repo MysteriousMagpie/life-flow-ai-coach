@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,13 +13,20 @@ interface ChatInputProps {
 export const ChatInput = ({ onSubmit, isProcessing }: ChatInputProps) => {
   const [input, setInput] = useState('');
   const { user } = useAuth();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isProcessing || !user) return;
     
-    onSubmit(input);
+    const message = input.trim();
     setInput('');
+    onSubmit(message);
+    
+    // Re-focus input after send
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -29,10 +36,18 @@ export const ChatInput = ({ onSubmit, isProcessing }: ChatInputProps) => {
     }
   };
 
+  // Auto-focus input when processing stops
+  useEffect(() => {
+    if (!isProcessing) {
+      inputRef.current?.focus();
+    }
+  }, [isProcessing]);
+
   return (
     <form onSubmit={handleSubmit} className="p-4 border-t bg-gray-50/80">
       <div className="flex space-x-2">
         <Input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
