@@ -76,12 +76,13 @@ export const useChat = () => {
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      // Prepare conversation history for the API
-      const conversationMessages = [...messages, userMessage].map(msg => ({
+      // Prepare conversation history for the API - include the new user message
+      const updatedMessages = [...messages, userMessage].map(msg => ({
         role: msg.role,
         content: msg.content
       }));
 
+      // Ensure latest user message is included before GPT call
       // Use environment variable with fallback for local development
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
       const response = await fetch(`${apiBaseUrl}/api/gpt`, {
@@ -91,7 +92,7 @@ export const useChat = () => {
         },
         body: JSON.stringify({
           message: content,
-          messages: conversationMessages,
+          messages: updatedMessages,
           userId: user.id
         }),
       });
