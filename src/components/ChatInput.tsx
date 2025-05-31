@@ -3,8 +3,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 const suggestions = [
   "Create a healthy breakfast for tomorrow",
@@ -23,6 +24,7 @@ interface ChatInputProps {
 export const ChatInput = ({ onSubmit, isProcessing }: ChatInputProps) => {
   const [input, setInput] = useState('');
   const [autoSend, setAutoSend] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -72,35 +74,55 @@ export const ChatInput = ({ onSubmit, isProcessing }: ChatInputProps) => {
   return (
     <div className="border-t bg-gray-50/80">
       {/* Suggestions Section */}
-      <div className="p-3 sm:p-4 pb-2">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-gray-700">Quick suggestions:</h3>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-600">Auto-send suggestions</span>
-            <Switch
-              checked={autoSend}
-              onCheckedChange={setAutoSend}
-              disabled={!user}
-              aria-label="Auto-send suggestions toggle"
-            />
+      <Collapsible open={showSuggestions} onOpenChange={setShowSuggestions}>
+        <div className="p-3 sm:p-4 pb-2">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center space-x-1 text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  <span>Quick suggestions</span>
+                  {showSuggestions ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-600">Auto-send suggestions</span>
+              <Switch
+                checked={autoSend}
+                onCheckedChange={setAutoSend}
+                disabled={!user}
+                aria-label="Auto-send suggestions toggle"
+              />
+            </div>
           </div>
+          
+          <CollapsibleContent className="transition-all duration-200 ease-out data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {suggestions.map((suggestion, index) => (
+                <Button
+                  key={`suggestion-${index}`}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  disabled={isProcessing || !user}
+                  className="text-left justify-start h-auto py-2 px-3 text-xs bg-white hover:bg-blue-50 border-gray-200 hover:border-blue-300 transition-colors"
+                >
+                  <span className="truncate">{suggestion}</span>
+                </Button>
+              ))}
+            </div>
+          </CollapsibleContent>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {suggestions.map((suggestion, index) => (
-            <Button
-              key={`suggestion-${index}`}
-              variant="outline"
-              size="sm"
-              onClick={() => handleSuggestionClick(suggestion)}
-              disabled={isProcessing || !user}
-              className="text-left justify-start h-auto py-2 px-3 text-xs bg-white hover:bg-blue-50 border-gray-200 hover:border-blue-300 transition-colors"
-            >
-              <span className="truncate">{suggestion}</span>
-            </Button>
-          ))}
-        </div>
-      </div>
+      </Collapsible>
 
       {/* Input Section */}
       <form onSubmit={handleSubmit} className="p-3 sm:p-4 pt-0">
