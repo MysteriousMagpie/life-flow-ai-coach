@@ -1,6 +1,6 @@
 
 {
-  "extends": "./tsconfig.app.json",
+  "extends": "./client/tsconfig.app.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
