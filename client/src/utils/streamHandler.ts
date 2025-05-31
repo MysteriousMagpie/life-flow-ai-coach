@@ -42,6 +42,10 @@ export class StreamHandler {
                     : msg
                 ));
               }
+              // Handle workout plan data if present
+              if (chunk.workoutPlan || chunk.actions) {
+                console.log('Workout plan data received:', chunk);
+              }
             } catch (parseError) {
               // If not JSON, might be final response
               console.log('Non-JSON chunk:', line);
