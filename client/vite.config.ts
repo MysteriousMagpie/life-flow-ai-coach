@@ -18,10 +18,22 @@ const multiLocationResolver = () => ({
         return localPath;
       }
       
+      // Also try with .ts extension
+      const localPathTs = path.resolve(__dirname, './src/components', `${componentName}.ts`);
+      if (fs.existsSync(localPathTs)) {
+        return localPathTs;
+      }
+      
       // Then try root components directory
       const rootPath = path.resolve(__dirname, '../components', `${componentName}.tsx`);
       if (fs.existsSync(rootPath)) {
         return rootPath;
+      }
+      
+      // Also try root with .ts extension
+      const rootPathTs = path.resolve(__dirname, '../components', `${componentName}.ts`);
+      if (fs.existsSync(rootPathTs)) {
+        return rootPathTs;
       }
     }
     return null;
