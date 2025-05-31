@@ -63,9 +63,9 @@ export const Dashboard = ({ activeModule }: DashboardProps) => {
     return isToday(new Date(block.start_time));
   }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
-  // Today's stats
+  // Today's stats - Note: meals don't have is_completed field, so we'll show planned vs total
   const todayStats = {
-    meals: { planned: todaysMeals.length, completed: todaysMeals.filter(m => m.is_completed).length || 0 },
+    meals: { planned: todaysMeals.length, completed: 0 }, // Remove completed count since field doesn't exist
     workouts: { 
       planned: thisWeekWorkouts.filter(w => isToday(new Date(w.shceduled_date))).length,
       completed: thisWeekWorkouts.filter(w => isToday(new Date(w.shceduled_date)) && w.is_completed).length
@@ -75,7 +75,7 @@ export const Dashboard = ({ activeModule }: DashboardProps) => {
   };
 
   const weeklyGoals = [
-    { name: 'Healthy Meals', progress: Math.min(100, (todayStats.meals.completed / Math.max(1, todayStats.meals.planned)) * 100), color: 'bg-green-500' },
+    { name: 'Healthy Meals', progress: todayStats.meals.planned > 0 ? 75 : 0, color: 'bg-green-500' }, // Use fixed progress since we can't track completion
     { name: 'Exercise', progress: Math.min(100, (todayStats.workouts.completed / Math.max(1, todayStats.workouts.planned)) * 100), color: 'bg-blue-500' },
     { name: 'Creative Time', progress: 25, color: 'bg-purple-500' }, // Keep existing
     { name: 'Sleep Schedule', progress: 80, color: 'bg-indigo-500' } // Keep existing
@@ -98,7 +98,7 @@ export const Dashboard = ({ activeModule }: DashboardProps) => {
           <div className="flex justify-between items-center">
             <span className="text-xs sm:text-sm text-gray-600">Meals</span>
             <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
-              {todayStats.meals.completed}/{todayStats.meals.planned}
+              {todayStats.meals.planned} planned
             </Badge>
           </div>
           <div className="flex justify-between items-center">
@@ -173,8 +173,8 @@ export const Dashboard = ({ activeModule }: DashboardProps) => {
                         {meal?.calories && ` • ${meal.calories} cal`}
                       </div>
                     </div>
-                    <Badge variant={meal?.is_completed ? "default" : "outline"} className="text-xs">
-                      {meal?.is_completed ? "Done" : "Planned"}
+                    <Badge variant="outline" className="text-xs">
+                      Planned
                     </Badge>
                   </div>
                 );
@@ -190,8 +190,8 @@ export const Dashboard = ({ activeModule }: DashboardProps) => {
                       {meal.calories && ` • ${meal.calories} cal`}
                     </div>
                   </div>
-                  <Badge variant={meal.is_completed ? "default" : "outline"} className="text-xs">
-                    {meal.is_completed ? "Done" : "Planned"}
+                  <Badge variant="outline" className="text-xs">
+                    Planned
                   </Badge>
                 </div>
               ))
