@@ -3,19 +3,21 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTasks } from '@/hooks/useTasks';
+import { useWorkouts } from '@/hooks/useWorkouts';
+import { useReminders } from '@/hooks/useReminders';
+import { useMeals } from '@/hooks/useMeals';
 import { CheckCircle, Dumbbell, Bell, Utensils, Calendar, Clock } from 'lucide-react';
 import { format, isToday, isTomorrow } from 'date-fns';
 
 export const QuickActionPanel = () => {
-  // Mock data for now - in a real app this would come from hooks
-  const pendingTasks = [];
-  const overdueTasks = [];
-  const workouts = [];
-  const reminders = [];
-  const meals = [];
+  const { pendingTasks, overdueTasks } = useTasks();
+  const { workouts } = useWorkouts();
+  const { reminders } = useReminders();
+  const { meals } = useMeals();
 
   const todayWorkouts = workouts.filter(w => 
-    w.scheduled_date && isToday(new Date(w.scheduled_date)) && !w.is_completed
+    w.shceduled_date && isToday(new Date(w.shceduled_date)) && !w.is_completed
   );
 
   const upcomingReminders = reminders.filter(r => {
