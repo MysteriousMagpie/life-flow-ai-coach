@@ -12,12 +12,16 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:organize": "ts-node e2e/utils/screenshot-organizer.ts",
+    "test:e2e:summary": "ts-node e2e/reporters/github-summary.ts test-results/reports",
     "test:auth": "playwright test auth.spec.ts",
     "test:ai": "playwright test ai-coaching.spec.ts",
     "test:dashboard": "playwright test dashboard.spec.ts",
     "test:profile": "playwright test profile-settings.spec.ts",
     "test:integration": "playwright test integration.spec.ts",
-    "test:install": "playwright install"
+    "test:install": "playwright install",
+    "test:ci": "playwright test --reporter=html,json,junit && pnpm test:e2e:summary"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

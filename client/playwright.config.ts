@@ -1,5 +1,6 @@
 
 import { defineConfig, devices } from '@playwright/test';
+import CustomTestReporter from './e2e/reporters/custom-reporter';
 
 export default defineConfig({
   testDir: './e2e',
@@ -14,7 +15,8 @@ export default defineConfig({
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results/results.json' }],
-    ['junit', { outputFile: 'test-results/results.xml' }]
+    ['junit', { outputFile: 'test-results/results.xml' }],
+    [CustomTestReporter]
   ],
   use: {
     baseURL: 'http://localhost:5173',
@@ -78,4 +80,5 @@ export default defineConfig({
   },
   outputDir: 'test-results/',
   globalSetup: require.resolve('./e2e/global-setup.ts'),
+  globalTeardown: require.resolve('./e2e/global-teardown.ts'),
 });
