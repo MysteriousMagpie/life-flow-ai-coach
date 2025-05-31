@@ -40,11 +40,21 @@ export const useChat = () => {
         timeBlocks
       });
 
-      // Convert actions to the expected format
-      const formattedActions = actions.map(action => ({
-        type: action.function || action.type,
-        payload: action.arguments || action.data || {}
-      }));
+      // Convert actions to the expected format and handle meal planning
+      const formattedActions = actions.map(action => {
+        // Handle meal planning responses
+        if (action.function === 'planDailyMeals' || action.type === 'planDailyMeals') {
+          return {
+            type: 'planDailyMeals',
+            payload: action.arguments || action.data || {}
+          };
+        }
+        
+        return {
+          type: action.function || action.type,
+          payload: action.arguments || action.data || {}
+        };
+      });
 
       await actionExecutor.executeActions(formattedActions, userId);
       
@@ -84,7 +94,7 @@ export const useChat = () => {
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      // Prepare conversation history for the API - include the new user message
+      // Ensure latest user message is included before GPT call
       const updatedMessages = [...messages, userMessage];
       
       const response = await chatApiService.sendMessage(content, updatedMessages, user.id);

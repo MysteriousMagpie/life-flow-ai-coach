@@ -17,6 +17,31 @@ export const gptFunctions = [
     }
   },
   {
+    name: 'planDailyMeals',
+    description: 'Plan meals for a specific day and schedule them in time blocks',
+    parameters: {
+      type: 'object',
+      properties: {
+        target_date: { type: 'string', format: 'date', description: 'Target date for meal planning (YYYY-MM-DD)' },
+        meals: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: 'Meal name' },
+              type: { type: 'string', enum: ['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'] },
+              calories: { type: 'number', description: 'Estimated calories' },
+              ingredients: { type: 'array', items: { type: 'string' } },
+              instructions: { type: 'string', description: 'Preparation instructions' }
+            },
+            required: ['name']
+          }
+        }
+      },
+      required: ['meals']
+    }
+  },
+  {
     name: 'addTask',
     description: 'Add a task to the task manager',
     parameters: {

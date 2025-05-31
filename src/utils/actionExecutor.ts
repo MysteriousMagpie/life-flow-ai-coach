@@ -1,9 +1,8 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface GPTAction {
-  type: 'addMeal' | 'addTask' | 'addWorkout' | 'addReminder' | 'addTimeBlock' | 'storeWorkoutPlan';
+  type: 'addMeal' | 'addTask' | 'addWorkout' | 'addReminder' | 'addTimeBlock' | 'storeWorkoutPlan' | 'planDailyMeals';
   payload: any;
 }
 
@@ -68,9 +67,88 @@ export class ActionExecutor {
       case 'storeWorkoutPlan':
         return this.storeWorkoutPlan(action.payload, userId);
       
+      case 'planDailyMeals':
+        return this.planDailyMeals(action.payload, userId);
+      
       default:
         throw new Error(`Unknown action type: ${action.type}`);
     }
+  }
+
+  private async planDailyMeals(mealPlan: any, userId: string): Promise<any> {
+    console.log('Planning daily meals:', mealPlan);
+    
+    const { meals = [], target_date } = mealPlan;
+    const planDate = target_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    // Define meal times for scheduling
+    const mealTimes = {
+      breakfast: '08:00',
+      morning_snack: '10:30',
+      lunch: '12:30',
+      afternoon_snack: '15:00',
+      dinner: '18:30',
+      evening_snack: '20:30'
+    };
+
+    let mealsCreated = 0;
+    let timeBlocksCreated = 0;
+
+    // Process each meal from the GPT response
+    for (const meal of meals) {
+      try {
+        const mealType = meal.type || meal.meal_type || this.inferMealType(meal.name);
+        const mealTime = mealTimes[mealType] || this.getDefaultTimeForMeal(mealType);
+        
+        // Create meal record
+        const mealData = {
+          user_id: userId,
+          name: meal.name || meal.title,
+          meal_type: mealType,
+          planned_date: planDate,
+          calories: meal.calories || this.estimateCalories(meal.name),
+          ingredients: meal.ingredients ? JSON.stringify(meal.ingredients) : null,
+          instructions: meal.instructions || meal.notes || null
+        };
+
+        await this.meals.createMeal(mealData);
+        mealsCreated++;
+
+        // Create time block for the meal
+        if (mealTime) {
+          const [hours, minutes] = mealTime.split(':').map(Number);
+          const startTime = new Date(planDate);
+          startTime.setHours(hours, minutes, 0, 0);
+          
+          const endTime = new Date(startTime);
+          endTime.setMinutes(endTime.getMinutes() + (mealType.includes('snack') ? 15 : 30));
+
+          const timeBlockData = {
+            user_id: userId,
+            title: `${this.capitalizeFirst(mealType)}: ${meal.name}`,
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            category: 'meal'
+          };
+
+          await this.timeBlocks.createTimeBlock(timeBlockData);
+          timeBlocksCreated++;
+        }
+      } catch (error) {
+        console.error('Failed to create meal or time block:', error);
+      }
+    }
+
+    return {
+      success: true,
+      message: `Daily meal plan created: ${mealsCreated} meals and ${timeBlocksCreated} time blocks scheduled for ${planDate}`,
+      data: { 
+        mealsCreated,
+        timeBlocksCreated,
+        planDate,
+        totalItems: mealsCreated + timeBlocksCreated
+      }
+    };
   }
 
   private async storeWorkoutPlan(workoutPlan: any, userId: string): Promise<any> {
@@ -287,5 +365,53 @@ export class ActionExecutor {
     }
     
     return workouts;
+  }
+
+  private inferMealType(mealName: string): string {
+    const name = mealName.toLowerCase();
+    
+    if (name.includes('breakfast') || name.includes('cereal') || name.includes('oatmeal') || name.includes('eggs')) {
+      return 'breakfast';
+    } else if (name.includes('lunch') || name.includes('sandwich') || name.includes('salad')) {
+      return 'lunch';
+    } else if (name.includes('dinner') || name.includes('pasta') || name.includes('steak') || name.includes('chicken')) {
+      return 'dinner';
+    } else if (name.includes('snack') || name.includes('smoothie') || name.includes('fruit') || name.includes('nuts')) {
+      return 'afternoon_snack';
+    }
+    
+    return 'lunch'; // Default fallback
+  }
+
+  private getDefaultTimeForMeal(mealType: string): string {
+    const defaultTimes = {
+      breakfast: '08:00',
+      morning_snack: '10:30',
+      lunch: '12:30',
+      afternoon_snack: '15:00',
+      dinner: '18:30',
+      evening_snack: '20:30'
+    };
+    
+    return defaultTimes[mealType] || '12:00';
+  }
+
+  private estimateCalories(mealName: string): number {
+    const name = mealName.toLowerCase();
+    
+    if (name.includes('salad')) return 350;
+    if (name.includes('smoothie')) return 280;
+    if (name.includes('pasta')) return 550;
+    if (name.includes('sandwich')) return 420;
+    if (name.includes('soup')) return 250;
+    if (name.includes('steak') || name.includes('salmon')) return 600;
+    if (name.includes('chicken')) return 450;
+    if (name.includes('snack') || name.includes('fruit')) return 150;
+    
+    return 400; // Default estimate
+  }
+
+  private capitalizeFirst(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1).replace('_', ' ');
   }
 }
