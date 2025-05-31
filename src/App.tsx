@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "/Users/malachiledbetter/Documents/GitHub/life-flow-ai-coach/client/src/components/ProtectedRoute.tsx";
-import Index from "./pages/Index";
+import Index from "/Users/malachiledbetter/Documents/GitHub/life-flow-ai-coach/src/index.css";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
