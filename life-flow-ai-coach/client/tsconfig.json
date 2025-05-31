@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "esnext",
@@ -10,9 +11,10 @@
     "moduleResolution": "node",
     "baseUrl": "src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["*"],
+      "@/components/*": ["components/*", "../../components/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../../components"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
