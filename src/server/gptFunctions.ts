@@ -1,10 +1,9 @@
-
 import { supabase } from '../integrations/supabase/client';
 
 export const gptFunctions = [
   {
     name: 'addMeal',
-    description: 'Add a meal to the meal planner',
+    description: 'Add a meal to the meal planner (requires user to be logged in)',
     parameters: {
       type: 'object',
       properties: {
@@ -108,7 +107,13 @@ export async function executeFunctionCall(functionName: string, args: any): Prom
   // Get authenticated user from Supabase
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) {
-    throw new Error('User not authenticated');
+    console.error('[FUNCTION AUTH ERROR] User not authenticated:', error);
+    return {
+      success: false,
+      error: 'User not authenticated',
+      message: 'Please log in to use the meal planner feature',
+      requiresAuth: true
+    };
   }
 
   const userId = user.id;
@@ -135,15 +140,19 @@ async function addMeal(data: any) {
   console.log('[ADD MEAL] Starting with data:', data);
   
   try {
-    // Get authenticated user from Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error('[ADD MEAL ERROR] User not authenticated:', authError);
-      throw new Error('User not authenticated');
+    // Check if user_id is provided (should be from executeFunctionCall)
+    if (!data.user_id) {
+      console.error('[ADD MEAL ERROR] No user_id provided');
+      return {
+        success: false,
+        error: 'User authentication required',
+        message: 'Please log in to add meals to your planner',
+        requiresAuth: true
+      };
     }
 
     const mealData = {
-      user_id: user.id,
+      user_id: data.user_id,
       name: data.name,
       meal_type: data.meal_type,
       planned_date: data.planned_date,
@@ -160,12 +169,28 @@ async function addMeal(data: any) {
     
     if (error) {
       console.error('[ADD MEAL ERROR] Database error:', error);
-      throw error;
+      
+      // Handle specific database errors
+      if (error.code === '23503') {
+        return {
+          success: false,
+          error: 'User not found in database',
+          message: 'Please complete your profile setup before adding meals',
+          requiresAuth: true
+        };
+      }
+      
+      return {
+        success: false,
+        error: 'Database error',
+        message: 'Failed to save meal to planner. Please try again.',
+        details: error.message
+      };
     }
 
     console.log('[ADD MEAL] Successfully created meal:', result);
 
-    // Optionally create a time block for the meal
+    // Create time block for the meal
     if (data.meal_type && data.planned_date) {
       const mealTimes = {
         breakfast: '08:00',
@@ -181,13 +206,13 @@ async function addMeal(data: any) {
       startTime.setHours(hours, minutes, 0, 0);
       
       const endTime = new Date(startTime);
-      endTime.setMinutes(endTime.getMinutes() + 30); // 30 minute meal duration
+      endTime.setMinutes(endTime.getMinutes() + 30);
 
       try {
         const { data: timeBlockResult, error: timeBlockError } = await supabase
           .from('time_blocks')
           .insert({
-            user_id: user.id,
+            user_id: data.user_id,
             title: `${data.meal_type.charAt(0).toUpperCase() + data.meal_type.slice(1)}: ${data.name}`,
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
@@ -196,19 +221,28 @@ async function addMeal(data: any) {
           
         if (timeBlockError) {
           console.error('[ADD MEAL ERROR] Time block creation error:', timeBlockError);
+          // Don't fail the entire operation if time block creation fails
         } else {
           console.log('[ADD MEAL] Successfully created time block:', timeBlockResult);
         }
       } catch (timeBlockError) {
         console.error('[ADD MEAL ERROR] Failed to create time block for meal:', timeBlockError);
-        // Don't fail the entire operation if time block creation fails
       }
     }
     
-    return { success: true, meal: result };
+    return { 
+      success: true, 
+      meal: result,
+      message: `Successfully added ${data.name} to your meal planner for ${data.planned_date}`
+    };
   } catch (error) {
-    console.error('[ADD MEAL ERROR] Error:', error);
-    throw error;
+    console.error('[ADD MEAL ERROR] Unexpected error:', error);
+    return {
+      success: false,
+      error: 'Unexpected error',
+      message: 'An unexpected error occurred while adding the meal. Please try again.',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 }
 
