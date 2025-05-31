@@ -280,39 +280,45 @@ app.post('/api/gpt', async (req, res) => {
     const maxIterations = 10; // Prevent infinite loops
     let iterations = 0;
 
+    // Convert gptFunctions to tools format
+    const tools = gptFunctions.map(func => ({
+      type: "function" as const,
+      function: {
+        name: func.name,
+        description: func.description,
+        parameters: func.parameters
+      }
+    }));
+
     // Recursive function calling loop
     while (iterations < maxIterations) {
       console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: conversationMessages.length });
 
-      // DEBUG: Log the exact OpenAI configuration
-      const openaiConfig = {
-        model: "gpt-4o",
+      // Build OpenAI parameters with tools
+      const params = {
+        model: "gpt-4o" as const,
         messages: conversationMessages,
-        functions: gptFunctions.map(func => ({
-          name: func.name,
-          description: func.description,
-          parameters: func.parameters
-        })),
-        function_call: "auto",
+        tools: tools,
+        tool_choice: "auto" as const,
         temperature: 0.7
       };
       
-      console.log('[DEBUG] OpenAI Config:', {
-        model: openaiConfig.model,
-        functionsCount: openaiConfig.functions.length,
-        functionNames: openaiConfig.functions.map(f => f.name),
-        function_call: openaiConfig.function_call
+      // Log payload details
+      console.log('[PAYLOAD]', { 
+        toolsCount: params.tools.length, 
+        toolNames: params.tools.map(t => t.function.name),
+        model: params.model 
       });
 
-      const completion = await openai.chat.completions.create(openaiConfig);
+      const completion = await openai.chat.completions.create(params);
 
       const assistantMessage = completion.choices[0].message;
       
       // DEBUG: Log the complete response
       console.log('[DEBUG] OpenAI Response:', {
         finish_reason: completion.choices[0].finish_reason,
-        has_function_call: !!assistantMessage.function_call,
-        function_name: assistantMessage.function_call?.name,
+        has_tool_calls: !!assistantMessage.tool_calls,
+        tool_calls: assistantMessage.tool_calls?.map(tc => tc.function.name),
         content_preview: assistantMessage.content?.substring(0, 100)
       });
       
@@ -320,47 +326,49 @@ app.post('/api/gpt', async (req, res) => {
       conversationMessages.push({
         role: "assistant",
         content: assistantMessage.content,
-        function_call: assistantMessage.function_call
+        tool_calls: assistantMessage.tool_calls
       });
 
-      // Check if there's a function call to execute
-      if (assistantMessage.function_call) {
-        try {
-          const functionName = assistantMessage.function_call.name;
-          const args = JSON.parse(assistantMessage.function_call.arguments || '{}');
-          
-          console.log(`[FUNCTION CALL] ${functionName}`, args);
-          
-          // Execute the function call
-          const result = await parseFunctionCall(functionName, args);
-          
-          // Track the executed action
-          executedActions.push({
-            function: functionName,
-            arguments: args,
-            result: result
-          });
+      // Check if there are tool calls to execute
+      if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+        for (const toolCall of assistantMessage.tool_calls) {
+          try {
+            const functionName = toolCall.function.name;
+            const args = JSON.parse(toolCall.function.arguments || '{}');
+            
+            console.log(`[FUNCTION CALL] ${functionName}`, args);
+            
+            // Execute the function call
+            const result = await parseFunctionCall(functionName, args);
+            
+            // Track the executed action
+            executedActions.push({
+              function: functionName,
+              arguments: args,
+              result: result
+            });
 
-          // Add function result to conversation
-          conversationMessages.push({
-            role: "function",
-            name: functionName,
-            content: JSON.stringify(result)
-          });
+            // Add function result to conversation
+            conversationMessages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(result)
+            });
 
-          console.log(`[FUNCTION RESULT] ${functionName}`, { success: result.success });
-        } catch (functionError) {
-          console.error('[FUNCTION EXECUTION ERROR]', functionError);
-          
-          // Add error to conversation so GPT can handle it
-          conversationMessages.push({
-            role: "function",
-            name: assistantMessage.function_call.name,
-            content: JSON.stringify({
-              success: false,
-              error: functionError instanceof Error ? functionError.message : 'Unknown error'
-            })
-          });
+            console.log(`[FUNCTION RESULT] ${functionName}`, { success: result.success });
+          } catch (functionError) {
+            console.error('[FUNCTION EXECUTION ERROR]', functionError);
+            
+            // Add error to conversation so GPT can handle it
+            conversationMessages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({
+                success: false,
+                error: functionError instanceof Error ? functionError.message : 'Unknown error'
+              })
+            });
+          }
         }
         
         iterations++;
