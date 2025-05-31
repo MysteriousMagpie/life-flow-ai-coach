@@ -84,20 +84,28 @@ export const useChat = () => {
 
     setIsProcessing(true);
 
-    // Add user message immediately (optimistic UI)
-    const userMessage = createUserMessage(content);
+    // Add user message immediately (optimistic UI) with unique ID
+    const userMessage = {
+      ...createUserMessage(content),
+      id: crypto.randomUUID() // Ensure unique ID
+    };
     setMessages(prev => [...prev, userMessage]);
 
-    // Add placeholder assistant message for streaming
-    const assistantMessageId = `assistant-${Date.now()}`;
-    const assistantMessage = createAssistantMessage(assistantMessageId);
+    // Add placeholder assistant message for response with unique ID
+    const assistantMessageId = crypto.randomUUID();
+    const assistantMessage = {
+      ...createAssistantMessage(assistantMessageId),
+      id: assistantMessageId
+    };
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      // Ensure latest user message is included before GPT call
-      const updatedMessages = [...messages, userMessage];
+      // Filter out any assistant messages with tool_calls from the conversation history
+      const cleanMessages = [...messages, userMessage].filter(msg => 
+        !(msg.role === 'assistant' && 'tool_calls' in msg)
+      );
       
-      const response = await chatApiService.sendMessage(content, updatedMessages, user.id);
+      const response = await chatApiService.sendMessage(content, cleanMessages, user.id);
 
       // Check if response supports streaming
       if (response.body && response.body.getReader) {

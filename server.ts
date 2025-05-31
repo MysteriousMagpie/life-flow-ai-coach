@@ -319,12 +319,15 @@ app.post('/api/gpt', async (req, res) => {
     
     // Handle both legacy single message and new messages array format
     if (messages && Array.isArray(messages)) {
-      conversationMessages = messages;
+      // Filter out any assistant messages that might have tool_calls to prevent duplication
+      conversationMessages = messages.filter(msg => 
+        !(msg.role === 'assistant' && msg.tool_calls)
+      );
     } else if (message) {
       conversationMessages = [
         {
           role: "system",
-          content: "You are a helpful life planning assistant. Use the provided functions to help users organize their meals, workouts, tasks, reminders, and schedule. When users mention adding meals to their planner, use the addMeal function."
+          content: "You are a helpful life planning assistant. You have the following tools: addMeal (store meals in meal planner). Use addMeal whenever a user asks to create, add, or schedule a meal. Help users organize their meals, workouts, tasks, reminders, and schedule."
         },
         { role: "user", content: message }
       ];
@@ -344,13 +347,15 @@ app.post('/api/gpt', async (req, res) => {
       }
     }));
 
-    // Tool-calling loop
+    // Tool-calling loop - keep internal conversation separate from user-visible messages
+    let internalMessages = [...conversationMessages];
+
     while (iterations < maxIterations) {
-      console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: conversationMessages.length });
+      console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: internalMessages.length });
 
       const params = {
         model: "gpt-4o-mini" as const,
-        messages: conversationMessages,
+        messages: internalMessages,
         tools: tools,
         tool_choice: "auto" as const,
         temperature: 0.7
@@ -367,10 +372,10 @@ app.post('/api/gpt', async (req, res) => {
         tool_calls_count: choice.message.tool_calls?.length || 0
       });
 
-      // Tool call round
+      // Tool call round - handle internally without exposing to user
       if (choice.finish_reason === "tool_calls") {
-        // Add assistant message with tool calls
-        conversationMessages.push({
+        // Add assistant message with tool calls to internal conversation only
+        internalMessages.push({
           role: "assistant",
           content: choice.message.content,
           tool_calls: choice.message.tool_calls
@@ -390,8 +395,8 @@ app.post('/api/gpt', async (req, res) => {
                 result: { success: true }
               });
 
-              // Add tool response
-              conversationMessages.push({
+              // Add tool response to internal conversation only
+              internalMessages.push({
                 role: "tool",
                 tool_call_id: toolCall.id,
                 content: JSON.stringify({ status: "success", message: "Meal added successfully" })
@@ -401,7 +406,7 @@ app.post('/api/gpt', async (req, res) => {
             } catch (error) {
               console.error('[FUNCTION ERROR] addMeal:', error);
               
-              conversationMessages.push({
+              internalMessages.push({
                 role: "tool",
                 tool_call_id: toolCall.id,
                 content: JSON.stringify({ status: "error", message: error.message })
@@ -423,7 +428,7 @@ app.post('/api/gpt', async (req, res) => {
                 result: result
               });
 
-              conversationMessages.push({
+              internalMessages.push({
                 role: "tool",
                 tool_call_id: toolCall.id,
                 content: JSON.stringify(result)
@@ -433,7 +438,7 @@ app.post('/api/gpt', async (req, res) => {
             } catch (functionError) {
               console.error('[FUNCTION EXECUTION ERROR]', functionError);
               
-              conversationMessages.push({
+              internalMessages.push({
                 role: "tool",
                 tool_call_id: toolCall.id,
                 content: JSON.stringify({
