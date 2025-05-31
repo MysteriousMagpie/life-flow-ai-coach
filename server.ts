@@ -1,4 +1,3 @@
-
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -24,6 +23,61 @@ app.use(express.json());
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+// Helper function to execute addMeal
+async function addMeal(args: any, userId: string) {
+  try {
+    console.log('[ADD MEAL] Executing with args:', args);
+    
+    const mealData = {
+      user_id: userId,
+      name: args.name,
+      meal_type: args.meal_type || 'breakfast',
+      planned_date: args.planned_date,
+      calories: args.calories || null,
+      ingredients: args.ingredients ? JSON.stringify(args.ingredients) : null,
+      instructions: args.instructions || null
+    };
+
+    const meal = await mealsService.create(mealData);
+    console.log('[ADD MEAL] Successfully created meal:', meal);
+
+    // Create time block for the meal
+    if (args.meal_type && args.planned_date) {
+      const mealTimes = {
+        breakfast: '08:00',
+        lunch: '12:30',
+        dinner: '18:30',
+        snack: '15:00'
+      };
+
+      const mealTime = mealTimes[args.meal_type] || '12:00';
+      const [hours, minutes] = mealTime.split(':').map(Number);
+      
+      const startTime = new Date(args.planned_date);
+      startTime.setHours(hours, minutes, 0, 0);
+      
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + 30);
+
+      const timeBlockData = {
+        user_id: userId,
+        title: `${args.meal_type.charAt(0).toUpperCase() + args.meal_type.slice(1)}: ${args.name}`,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        category: 'meal'
+      };
+
+      await timeBlocksService.create(timeBlockData);
+      console.log('[ADD MEAL] Successfully created time block');
+    }
+
+    return { success: true, meal };
+  } catch (error) {
+    console.error('[ADD MEAL] Error:', error);
+    throw error;
+  }
+}
 
 // Backend action executor that uses services directly
 const backendActionExecutor = {
@@ -277,7 +331,7 @@ app.post('/api/gpt', async (req, res) => {
     }
 
     const executedActions: any[] = [];
-    const maxIterations = 10; // Prevent infinite loops
+    const maxIterations = 10;
     let iterations = 0;
 
     // Convert gptFunctions to tools format
@@ -290,98 +344,118 @@ app.post('/api/gpt', async (req, res) => {
       }
     }));
 
-    // Recursive function calling loop
+    // Tool-calling loop
     while (iterations < maxIterations) {
       console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: conversationMessages.length });
 
-      // Build OpenAI parameters with tools
       const params = {
-        model: "gpt-4o" as const,
+        model: "gpt-4o-mini" as const,
         messages: conversationMessages,
         tools: tools,
         tool_choice: "auto" as const,
         temperature: 0.7
       };
       
-      // Log payload details
-      console.log('[PAYLOAD]', { 
-        toolsCount: params.tools.length, 
-        toolNames: params.tools.map(t => t.function.name),
-        model: params.model 
-      });
+      console.log('[PAYLOAD]', { toolCount: params.tools.length });
 
       const completion = await openai.chat.completions.create(params);
-
-      const assistantMessage = completion.choices[0].message;
+      const choice = completion.choices[0];
       
-      // DEBUG: Log the complete response
       console.log('[DEBUG] OpenAI Response:', {
-        finish_reason: completion.choices[0].finish_reason,
-        has_tool_calls: !!assistantMessage.tool_calls,
-        tool_calls: assistantMessage.tool_calls?.map(tc => tc.function.name),
-        content_preview: assistantMessage.content?.substring(0, 100)
-      });
-      
-      // Add assistant message to conversation
-      conversationMessages.push({
-        role: "assistant",
-        content: assistantMessage.content,
-        tool_calls: assistantMessage.tool_calls
+        finish_reason: choice.finish_reason,
+        has_tool_calls: !!choice.message.tool_calls,
+        tool_calls_count: choice.message.tool_calls?.length || 0
       });
 
-      // Check if there are tool calls to execute
-      if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
-        for (const toolCall of assistantMessage.tool_calls) {
-          try {
-            const functionName = toolCall.function.name;
-            const args = JSON.parse(toolCall.function.arguments || '{}');
-            
-            console.log(`[FUNCTION CALL] ${functionName}`, args);
-            
-            // Execute the function call
-            const result = await parseFunctionCall(functionName, args);
-            
-            // Track the executed action
-            executedActions.push({
-              function: functionName,
-              arguments: args,
-              result: result
-            });
+      // Tool call round
+      if (choice.finish_reason === "tool_calls") {
+        // Add assistant message with tool calls
+        conversationMessages.push({
+          role: "assistant",
+          content: choice.message.content,
+          tool_calls: choice.message.tool_calls
+        });
 
-            // Add function result to conversation
-            conversationMessages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(result)
-            });
+        // Process each tool call
+        for (const toolCall of choice.message.tool_calls || []) {
+          if (toolCall.type === "function" && toolCall.function?.name === "addMeal") {
+            try {
+              console.log('[FUNCTION CALL] addMeal', toolCall.function.arguments);
+              const args = JSON.parse(toolCall.function.arguments);
+              await addMeal(args, userId);
+              
+              executedActions.push({
+                function: "addMeal",
+                arguments: args,
+                result: { success: true }
+              });
 
-            console.log(`[FUNCTION RESULT] ${functionName}`, { success: result.success });
-          } catch (functionError) {
-            console.error('[FUNCTION EXECUTION ERROR]', functionError);
-            
-            // Add error to conversation so GPT can handle it
-            conversationMessages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify({
-                success: false,
-                error: functionError instanceof Error ? functionError.message : 'Unknown error'
-              })
-            });
+              // Add tool response
+              conversationMessages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ status: "success", message: "Meal added successfully" })
+              });
+
+              console.log('[FUNCTION RESULT] addMeal success');
+            } catch (error) {
+              console.error('[FUNCTION ERROR] addMeal:', error);
+              
+              conversationMessages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({ status: "error", message: error.message })
+              });
+            }
+          } else {
+            // Handle other tool calls through existing system
+            try {
+              const functionName = toolCall.function?.name;
+              const args = JSON.parse(toolCall.function?.arguments || '{}');
+              
+              console.log(`[FUNCTION CALL] ${functionName}`, args);
+              
+              const result = await parseFunctionCall(functionName, args);
+              
+              executedActions.push({
+                function: functionName,
+                arguments: args,
+                result: result
+              });
+
+              conversationMessages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(result)
+              });
+
+              console.log(`[FUNCTION RESULT] ${functionName}`, { success: result.success });
+            } catch (functionError) {
+              console.error('[FUNCTION EXECUTION ERROR]', functionError);
+              
+              conversationMessages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({
+                  success: false,
+                  error: functionError instanceof Error ? functionError.message : 'Unknown error'
+                })
+              });
+            }
           }
         }
         
         iterations++;
-        continue; // Continue the loop for next GPT call
+        continue; // Loop again for natural language response
       } else {
-        // No more function calls, we're done
+        // Normal exit - send final assistant content to client
         console.log('[GPT COMPLETE]', { iterations, actionsExecuted: executedActions.length });
         
         const response = {
-          message: assistantMessage.content || "I'm here to help you plan your life better!",
+          message: choice.message.content || "I'm here to help you plan your life better!",
           actions: executedActions,
           actionResults: executedActions.map(action => action.result),
-          activeModule: null // Could be enhanced to detect active module
+          activeModule: null
         };
 
         console.log('[GPT RESPONSE]', { 
