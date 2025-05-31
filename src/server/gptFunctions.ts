@@ -1,3 +1,4 @@
+
 import { supabase } from '../integrations/supabase/client';
 
 export const gptFunctions = [
@@ -134,14 +135,31 @@ async function addMeal(data: any) {
   console.log('[ADD MEAL] Starting with data:', data);
   
   try {
+    // Get authenticated user from Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('[ADD MEAL ERROR] User not authenticated:', authError);
+      throw new Error('User not authenticated');
+    }
+
+    const mealData = {
+      user_id: user.id,
+      name: data.name,
+      meal_type: data.meal_type,
+      planned_date: data.planned_date,
+      calories: data.calories || null,
+      ingredients: data.ingredients ? JSON.stringify(data.ingredients) : null,
+      instructions: data.instructions || null
+    };
+
     const { data: result, error } = await supabase
       .from('meals')
-      .insert(data)
+      .insert(mealData)
       .select()
       .single();
     
     if (error) {
-      console.error('[ADD MEAL] Database error:', error);
+      console.error('[ADD MEAL ERROR] Database error:', error);
       throw error;
     }
 
@@ -169,7 +187,7 @@ async function addMeal(data: any) {
         const { data: timeBlockResult, error: timeBlockError } = await supabase
           .from('time_blocks')
           .insert({
-            user_id: data.user_id,
+            user_id: user.id,
             title: `${data.meal_type.charAt(0).toUpperCase() + data.meal_type.slice(1)}: ${data.name}`,
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
@@ -177,19 +195,19 @@ async function addMeal(data: any) {
           });
           
         if (timeBlockError) {
-          console.error('[ADD MEAL] Time block creation error:', timeBlockError);
+          console.error('[ADD MEAL ERROR] Time block creation error:', timeBlockError);
         } else {
           console.log('[ADD MEAL] Successfully created time block:', timeBlockResult);
         }
       } catch (timeBlockError) {
-        console.error('Failed to create time block for meal:', timeBlockError);
+        console.error('[ADD MEAL ERROR] Failed to create time block for meal:', timeBlockError);
         // Don't fail the entire operation if time block creation fails
       }
     }
     
     return { success: true, meal: result };
   } catch (error) {
-    console.error('[ADD MEAL] Error:', error);
+    console.error('[ADD MEAL ERROR] Error:', error);
     throw error;
   }
 }
