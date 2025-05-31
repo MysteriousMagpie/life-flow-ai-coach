@@ -1,3 +1,4 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -50,19 +51,25 @@ export class ActionExecutor {
 
     switch (action.type) {
       case 'addMeal':
-        return this.meals.createMeal(payloadWithUser);
+        // Create meal and let the hook handle success/error states
+        this.meals.createMeal(payloadWithUser);
+        return { type: 'meal', data: payloadWithUser };
       
       case 'addTask':
-        return this.tasks.createTask(payloadWithUser);
+        this.tasks.createTask(payloadWithUser);
+        return { type: 'task', data: payloadWithUser };
       
       case 'addWorkout':
-        return this.workouts.createWorkout(payloadWithUser);
+        this.workouts.createWorkout(payloadWithUser);
+        return { type: 'workout', data: payloadWithUser };
       
       case 'addReminder':
-        return this.reminders.createReminder(payloadWithUser);
+        this.reminders.createReminder(payloadWithUser);
+        return { type: 'reminder', data: payloadWithUser };
       
       case 'addTimeBlock':
-        return this.timeBlocks.createTimeBlock(payloadWithUser);
+        this.timeBlocks.createTimeBlock(payloadWithUser);
+        return { type: 'timeBlock', data: payloadWithUser };
       
       case 'storeWorkoutPlan':
         return this.storeWorkoutPlan(action.payload, userId);
@@ -91,8 +98,7 @@ export class ActionExecutor {
       evening_snack: '20:30'
     };
 
-    let mealsCreated = 0;
-    let timeBlocksCreated = 0;
+    let itemsCreated = 0;
 
     // Process each meal from the GPT response
     for (const meal of meals) {
@@ -111,8 +117,9 @@ export class ActionExecutor {
           instructions: meal.instructions || meal.notes || null
         };
 
-        await this.meals.createMeal(mealData);
-        mealsCreated++;
+        // Create meal through hook (will trigger proper state updates)
+        this.meals.createMeal(mealData);
+        itemsCreated++;
 
         // Create time block for the meal
         if (mealTime) {
@@ -131,8 +138,9 @@ export class ActionExecutor {
             category: 'meal'
           };
 
-          await this.timeBlocks.createTimeBlock(timeBlockData);
-          timeBlocksCreated++;
+          // Create time block through hook (will trigger proper state updates)
+          this.timeBlocks.createTimeBlock(timeBlockData);
+          itemsCreated++;
         }
       } catch (error) {
         console.error('Failed to create meal or time block:', error);
@@ -141,12 +149,11 @@ export class ActionExecutor {
 
     return {
       success: true,
-      message: `Daily meal plan created: ${mealsCreated} meals and ${timeBlocksCreated} time blocks scheduled for ${planDate}`,
+      message: `Daily meal plan initiated: ${Math.floor(itemsCreated/2)} meals scheduled for ${planDate}`,
       data: { 
-        mealsCreated,
-        timeBlocksCreated,
+        itemsCreated,
         planDate,
-        totalItems: mealsCreated + timeBlocksCreated
+        mealsPlanned: Math.floor(itemsCreated/2)
       }
     };
   }

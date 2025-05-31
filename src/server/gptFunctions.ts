@@ -64,12 +64,12 @@ export const gptFunctions = [
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Workout name' },
-        shceduled_date: { type: 'string', format: 'date', description: 'Scheduled date (YYYY-MM-DD)' },
+        scheduled_date: { type: 'string', format: 'date', description: 'Scheduled date (YYYY-MM-DD)' },
         duration: { type: 'number', description: 'Duration in minutes' },
         intensity: { type: 'string', enum: ['low', 'medium', 'high'] },
         is_completed: { type: 'boolean', default: false }
       },
-      required: ['name', 'shceduled_date']
+      required: ['name', 'scheduled_date']
     }
   },
   {

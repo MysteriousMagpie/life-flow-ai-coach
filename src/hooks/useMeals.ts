@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mealsService } from '@/services/mealsService';
 import { Meal, CreateMeal, UpdateMeal } from '@/types/database';
@@ -18,7 +19,7 @@ export const useMeals = () => {
   } = useQuery({
     queryKey: ['meals'],
     queryFn: mealsService.getAll,
-    enabled: !!user, // Only fetch when user is authenticated
+    enabled: !!user,
   });
 
   // Set up realtime subscription
@@ -37,15 +38,22 @@ export const useMeals = () => {
         },
         (payload) => {
           console.log('Realtime meals change:', payload);
-          // Refetch meals data when changes occur
+          
+          // Invalidate and refetch to ensure UI updates
           queryClient.invalidateQueries({ queryKey: ['meals'] });
           
-          // Show notification for new meals
+          // Only show notification for successful UI updates
           if (payload.eventType === 'INSERT') {
-            toast({
-              title: "Meal Added",
-              description: `New meal "${payload.new.name}" has been added`,
-            });
+            // Wait a bit for the query to update, then show toast
+            setTimeout(() => {
+              const updatedMeals = queryClient.getQueryData(['meals']) as Meal[] | undefined;
+              if (updatedMeals?.some(meal => meal.id === payload.new.id)) {
+                toast({
+                  title: "Meal Added",
+                  description: `"${payload.new.name}" has been added to your meal planner`,
+                });
+              }
+            }, 500);
           }
         }
       )
@@ -74,11 +82,10 @@ export const useMeals = () => {
       
       queryClient.setQueryData(['meals'], (old: Meal[] = []) => [optimisticMeal, ...old]);
 
-      // Return a context with the previous and new meal
       return { previousMeals, optimisticMeal };
     },
     onError: (error: any, newMeal, context) => {
-      // If the mutation fails, use the context to roll back
+      // Roll back on error
       if (context?.previousMeals) {
         queryClient.setQueryData(['meals'], context.previousMeals);
       }
@@ -88,27 +95,43 @@ export const useMeals = () => {
         variant: "destructive",
       });
     },
-    onSettled: () => {
-      // Always refetch after error or success to sync with server state
+    onSuccess: (data, variables, context) => {
+      // Ensure UI is updated before showing success toast
       queryClient.invalidateQueries({ queryKey: ['meals'] });
+      
+      // Wait for the query to update, then show success toast
+      setTimeout(() => {
+        const updatedMeals = queryClient.getQueryData(['meals']) as Meal[] | undefined;
+        if (updatedMeals?.some(meal => meal.name === data.name)) {
+          toast({
+            title: "Success",
+            description: `"${data.name}" has been added to your meal planner`,
+          });
+        }
+      }, 300);
     },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Meal created successfully",
-      });
+    onSettled: () => {
+      // Always refetch to sync with server state
+      queryClient.invalidateQueries({ queryKey: ['meals'] });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateMeal }) =>
       mealsService.update(id, updates),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['meals'] });
-      toast({
-        title: "Success",
-        description: "Meal updated successfully",
-      });
+      
+      // Only show toast after confirming UI update
+      setTimeout(() => {
+        const updatedMeals = queryClient.getQueryData(['meals']) as Meal[] | undefined;
+        if (updatedMeals?.some(meal => meal.id === data.id)) {
+          toast({
+            title: "Success",
+            description: "Meal updated successfully",
+          });
+        }
+      }, 300);
     },
     onError: (error: any) => {
       toast({
