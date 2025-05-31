@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { mealsService } from '@/services/mealsService';
 import { Meal, CreateMeal, UpdateMeal } from '@/types/database';
@@ -59,18 +58,44 @@ export const useMeals = () => {
 
   const createMutation = useMutation({
     mutationFn: mealsService.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['meals'] });
-      toast({
-        title: "Success",
-        description: "Meal created successfully",
-      });
+    onMutate: async (newMeal) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['meals'] });
+
+      // Snapshot the previous value
+      const previousMeals = queryClient.getQueryData(['meals']);
+
+      // Optimistically update to the new value
+      const optimisticMeal = {
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        ...newMeal,
+      };
+      
+      queryClient.setQueryData(['meals'], (old: Meal[] = []) => [optimisticMeal, ...old]);
+
+      // Return a context with the previous and new meal
+      return { previousMeals, optimisticMeal };
     },
-    onError: (error: any) => {
+    onError: (error: any, newMeal, context) => {
+      // If the mutation fails, use the context to roll back
+      if (context?.previousMeals) {
+        queryClient.setQueryData(['meals'], context.previousMeals);
+      }
       toast({
         title: "Error",
         description: error.message || "Failed to create meal",
         variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      // Always refetch after error or success to sync with server state
+      queryClient.invalidateQueries({ queryKey: ['meals'] });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Meal created successfully",
       });
     },
   });

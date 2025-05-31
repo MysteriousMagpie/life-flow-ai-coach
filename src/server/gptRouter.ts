@@ -1,6 +1,6 @@
 
 import OpenAI from 'openai';
-import { gptFunctions } from './gptFunctions';
+import { gptFunctions, executeFunctionCall } from './gptFunctions';
 import { mealsService } from '../services/mealsService';
 import { workoutsService } from '../services/workoutsService';
 import { tasksService } from '../services/tasksService';
@@ -21,60 +21,9 @@ export async function parseFunctionCall(functionName: string, args: any): Promis
   try {
     console.log(`[FUNCTION CALL] ${functionName}`, args);
     
-    switch (functionName) {
-      case 'createMeal':
-        const meal = await mealsService.create({
-          name: args.name,
-          meal_type: args.meal_type,
-          planned_date: args.planned_date,
-          calories: args.calories,
-          ingredients: args.ingredients ? JSON.stringify(args.ingredients) : null,
-          instructions: args.instructions,
-          user_id: 'temp-user' // TODO: Replace with actual user ID from auth
-        });
-        return { success: true, data: meal };
-
-      case 'scheduleWorkout':
-        const workout = await workoutsService.create({
-          name: args.name,
-          duration: args.duration,
-          intensity: args.intensity,
-          shceduled_date: args.shceduled_date,
-          user_id: 'temp-user' // TODO: Replace with actual user ID from auth
-        });
-        return { success: true, data: workout };
-
-      case 'addTask':
-        const task = await tasksService.create({
-          title: args.title,
-          description: args.description,
-          due_date: args.due_date,
-          user_id: 'temp-user' // TODO: Replace with actual user ID from auth
-        });
-        return { success: true, data: task };
-
-      case 'addReminder':
-        const reminder = await remindersService.create({
-          title: args.title,
-          due_date: args.due_date,
-          user_id: 'temp-user' // TODO: Replace with actual user ID from auth
-        });
-        return { success: true, data: reminder };
-
-      case 'createTimeBlock':
-        const timeBlock = await timeBlocksService.create({
-          title: args.title,
-          start_time: args.start_time,
-          end_time: args.end_time,
-          category: args.category,
-          linked_task_id: args.linked_task_id,
-          user_id: 'temp-user' // TODO: Replace with actual user ID from auth
-        });
-        return { success: true, data: timeBlock };
-
-      default:
-        return { success: false, error: `Unknown function: ${functionName}` };
-    }
+    // Use the centralized function executor
+    const result = await executeFunctionCall(functionName, args);
+    return result;
   } catch (error) {
     console.error(`[FUNCTION CALL ERROR] ${functionName}:`, error);
     return { success: false, error: error.message };
@@ -88,7 +37,7 @@ export async function getGptResponseWithFunctions(input: string) {
       messages: [
         {
           role: "system",
-          content: "You are a helpful life planning assistant. Use the provided functions to help users organize their meals, workouts, tasks, reminders, and schedule."
+          content: "You are a helpful life planning assistant. Use the provided functions to help users organize their meals, workouts, tasks, reminders, and schedule. When users mention adding meals to their planner, use the addMeal function."
         },
         { role: "user", content: input }
       ],
