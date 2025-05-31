@@ -270,7 +270,7 @@ app.post('/api/gpt', async (req, res) => {
       conversationMessages = [
         {
           role: "system",
-          content: "You are a helpful life planning assistant. Use the provided functions to help users organize their meals, workouts, tasks, reminders, and schedule. Be conversational and helpful."
+          content: "You are a helpful life planning assistant. Use the provided functions to help users organize their meals, workouts, tasks, reminders, and schedule. When users mention adding meals to their planner, use the addMeal function."
         },
         { role: "user", content: message }
       ];
@@ -284,7 +284,8 @@ app.post('/api/gpt', async (req, res) => {
     while (iterations < maxIterations) {
       console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: conversationMessages.length });
 
-      const completion = await openai.chat.completions.create({
+      // DEBUG: Log the exact OpenAI configuration
+      const openaiConfig = {
         model: "gpt-4o",
         messages: conversationMessages,
         functions: gptFunctions.map(func => ({
@@ -294,9 +295,26 @@ app.post('/api/gpt', async (req, res) => {
         })),
         function_call: "auto",
         temperature: 0.7
+      };
+      
+      console.log('[DEBUG] OpenAI Config:', {
+        model: openaiConfig.model,
+        functionsCount: openaiConfig.functions.length,
+        functionNames: openaiConfig.functions.map(f => f.name),
+        function_call: openaiConfig.function_call
       });
 
+      const completion = await openai.chat.completions.create(openaiConfig);
+
       const assistantMessage = completion.choices[0].message;
+      
+      // DEBUG: Log the complete response
+      console.log('[DEBUG] OpenAI Response:', {
+        finish_reason: completion.choices[0].finish_reason,
+        has_function_call: !!assistantMessage.function_call,
+        function_name: assistantMessage.function_call?.name,
+        content_preview: assistantMessage.content?.substring(0, 100)
+      });
       
       // Add assistant message to conversation
       conversationMessages.push({

@@ -20,6 +20,7 @@ export const ChatInput = ({ onSubmit, isProcessing }: ChatInputProps) => {
     if (!input.trim() || isProcessing || !user) return;
     
     const message = input.trim();
+    console.log('[CHAT INPUT] Submitting message:', message);
     setInput('');
     onSubmit(message);
     

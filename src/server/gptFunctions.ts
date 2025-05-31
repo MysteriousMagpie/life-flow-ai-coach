@@ -1,3 +1,5 @@
+import { supabase } from '../integrations/supabase/client';
+
 export const gptFunctions = [
   {
     name: 'addMeal',
@@ -129,49 +131,67 @@ export async function executeFunctionCall(functionName: string, args: any): Prom
 }
 
 async function addMeal(data: any) {
-  const { data: result, error } = await supabase
-    .from('meals')
-    .insert(data)
-    .select()
-    .single();
+  console.log('[ADD MEAL] Starting with data:', data);
   
-  if (error) throw error;
-
-  // Optionally create a time block for the meal
-  if (data.meal_type && data.planned_date) {
-    const mealTimes = {
-      breakfast: '08:00',
-      lunch: '12:30',
-      dinner: '18:30',
-      snack: '15:00'
-    };
-
-    const mealTime = mealTimes[data.meal_type] || '12:00';
-    const [hours, minutes] = mealTime.split(':').map(Number);
+  try {
+    const { data: result, error } = await supabase
+      .from('meals')
+      .insert(data)
+      .select()
+      .single();
     
-    const startTime = new Date(data.planned_date);
-    startTime.setHours(hours, minutes, 0, 0);
-    
-    const endTime = new Date(startTime);
-    endTime.setMinutes(endTime.getMinutes() + 30); // 30 minute meal duration
-
-    try {
-      await supabase
-        .from('time_blocks')
-        .insert({
-          user_id: data.user_id,
-          title: `${data.meal_type.charAt(0).toUpperCase() + data.meal_type.slice(1)}: ${data.name}`,
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          category: 'meal'
-        });
-    } catch (timeBlockError) {
-      console.error('Failed to create time block for meal:', timeBlockError);
-      // Don't fail the entire operation if time block creation fails
+    if (error) {
+      console.error('[ADD MEAL] Database error:', error);
+      throw error;
     }
+
+    console.log('[ADD MEAL] Successfully created meal:', result);
+
+    // Optionally create a time block for the meal
+    if (data.meal_type && data.planned_date) {
+      const mealTimes = {
+        breakfast: '08:00',
+        lunch: '12:30',
+        dinner: '18:30',
+        snack: '15:00'
+      };
+
+      const mealTime = mealTimes[data.meal_type] || '12:00';
+      const [hours, minutes] = mealTime.split(':').map(Number);
+      
+      const startTime = new Date(data.planned_date);
+      startTime.setHours(hours, minutes, 0, 0);
+      
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + 30); // 30 minute meal duration
+
+      try {
+        const { data: timeBlockResult, error: timeBlockError } = await supabase
+          .from('time_blocks')
+          .insert({
+            user_id: data.user_id,
+            title: `${data.meal_type.charAt(0).toUpperCase() + data.meal_type.slice(1)}: ${data.name}`,
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            category: 'meal'
+          });
+          
+        if (timeBlockError) {
+          console.error('[ADD MEAL] Time block creation error:', timeBlockError);
+        } else {
+          console.log('[ADD MEAL] Successfully created time block:', timeBlockResult);
+        }
+      } catch (timeBlockError) {
+        console.error('Failed to create time block for meal:', timeBlockError);
+        // Don't fail the entire operation if time block creation fails
+      }
+    }
+    
+    return { success: true, meal: result };
+  } catch (error) {
+    console.error('[ADD MEAL] Error:', error);
+    throw error;
   }
-  
-  return { success: true, meal: result };
 }
 
 async function planDailyMeals(data: any) {
@@ -282,6 +302,3 @@ async function addTimeBlock(data: any) {
   if (error) throw error;
   return { success: true, timeBlock: result };
 }
-
-// Import supabase client
-import { supabase } from '../integrations/supabase/client';
