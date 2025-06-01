@@ -22,7 +22,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Example backend action executor (abridged for brevity)
+// Backend action executor with specialized methods
 const backendActionExecutor = {
   async executeActions(actions: any[], userId: string): Promise<any[]> {
     const results: any[] = [];
@@ -42,8 +42,10 @@ const backendActionExecutor = {
     }
     return results;
   },
- async executeAction(action: any, userId: string) {
+
+  async executeAction(action: any, userId: string): Promise<any> {
     const dataWithUserId = action.data ? { ...action.data, user_id: userId } : { user_id: userId };
+
     switch (action.module) {
       case 'meals':
         return this.executeMealAction(action, dataWithUserId);
@@ -62,10 +64,116 @@ const backendActionExecutor = {
     }
   },
 
-  // ...keep other methods like executeMealAction, etc.
+  // Meals
+  async executeMealAction(action: any, data: any) {
+    switch (action.type) {
+      case 'create': {
+        const meal = await mealsService.create(data);
+        return { success: true, message: `Created meal: ${data.name}`, data: meal, functionName: action.functionName };
+      }
+      case 'delete': {
+        if (!action.id) throw new Error('No meal ID provided for deletion');
+        await mealsService.delete(action.id);
+        return { success: true, message: 'Meal deleted successfully', functionName: action.functionName };
+      }
+      default:
+        throw new Error(`Unsupported meal action: ${action.type}`);
+    }
+  },
+
+  // Tasks
+  async executeTaskAction(action: any, data: any) {
+    switch (action.type) {
+      case 'create': {
+        const task = await tasksService.create(data);
+        return { success: true, message: `Created task: ${data.title}`, data: task, functionName: action.functionName };
+      }
+      case 'complete': {
+        if (!action.id) throw new Error('No task ID provided for completion');
+        await tasksService.markComplete(action.id);
+        return { success: true, message: 'Task marked as complete', functionName: action.functionName };
+      }
+      case 'delete': {
+        if (!action.id) throw new Error('No task ID provided for deletion');
+        await tasksService.delete(action.id);
+        return { success: true, message: 'Task deleted successfully', functionName: action.functionName };
+      }
+      default:
+        throw new Error(`Unsupported task action: ${action.type}`);
+    }
+  },
+
+  // Workouts
+  async executeWorkoutAction(action: any, data: any) {
+    switch (action.type) {
+      case 'create': {
+        const workout = await workoutsService.create(data);
+        return { success: true, message: `Created workout: ${data.name}`, data: workout, functionName: action.functionName };
+      }
+      case 'complete': {
+        if (!action.id) throw new Error('No workout ID provided for completion');
+        await workoutsService.markComplete(action.id);
+        return { success: true, message: 'Workout marked as complete', functionName: action.functionName };
+      }
+      case 'delete': {
+        if (!action.id) throw new Error('No workout ID provided for deletion');
+        await workoutsService.delete(action.id);
+        return { success: true, message: 'Workout deleted successfully', functionName: action.functionName };
+      }
+      default:
+        throw new Error(`Unsupported workout action: ${action.type}`);
+    }
+  },
+
+  // Reminders
+  async executeReminderAction(action: any, data: any) {
+    switch (action.type) {
+      case 'create': {
+        const reminder = await remindersService.create(data);
+        return { success: true, message: `Created reminder: ${data.title}`, data: reminder, functionName: action.functionName };
+      }
+      case 'delete': {
+        if (!action.id) throw new Error('No reminder ID provided for deletion');
+        await remindersService.delete(action.id);
+        return { success: true, message: 'Reminder deleted successfully', functionName: action.functionName };
+      }
+      default:
+        throw new Error(`Unsupported reminder action: ${action.type}`);
+    }
+  },
+
+  // Time Blocks
+  async executeTimeBlockAction(action: any, data: any) {
+    switch (action.type) {
+      case 'create': {
+        const timeBlock = await timeBlocksService.create(data);
+        return { success: true, message: `Created time block: ${data.title}`, data: timeBlock, functionName: action.functionName };
+      }
+      case 'update': {
+        if (!action.id || !data.new_time) throw new Error('No event ID or new time provided for rescheduling');
+        await timeBlocksService.update(action.id, {
+          start_time: new Date(data.new_time).toISOString(),
+          end_time: new Date(new Date(data.new_time).getTime() + 60 * 60 * 1000).toISOString()
+        });
+        return { success: true, message: `Event rescheduled successfully${data.reason ? ': ' + data.reason : ''}`, functionName: action.functionName };
+      }
+      case 'delete': {
+        if (!action.id) throw new Error('No time block ID provided for deletion');
+        await timeBlocksService.delete(action.id);
+        return { success: true, message: 'Time block deleted successfully', functionName: action.functionName };
+      }
+      default:
+        throw new Error(`Unsupported time block action: ${action.type}`);
+    }
+  },
+
+  // Analysis (stub)
+  async executeAnalysisAction(action: any, data: any) {
+    return { success: true, message: 'Analysis completed', data, functionName: action.functionName };
+  }
 };
 
-// **Corrected** `/api/gpt` route handler
+// /api/gpt route
 app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
   const { message, messages, userId } = req.body;
 
@@ -76,7 +184,7 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
       actionResults: [],
       activeModule: null
     });
-    return; // Return void
+    return;
   }
 
   if (!userId) {
@@ -86,7 +194,7 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
       actionResults: [],
       activeModule: null
     });
-    return; // Return void
+    return;
   }
 
   try {
@@ -105,12 +213,10 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
       ];
     }
 
-    // Collect actions and results
     const executedActions: any[] = [];
     const maxIterations = 10;
     let iterations = 0;
 
-    // Recursive loop for function-calling
     while (iterations < maxIterations) {
       console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: conversationMessages.length });
 
@@ -171,15 +277,14 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
           actionResults: executedActions.map(a => a.result),
           activeModule: null
         };
-        res.json(response); // ✅ No `return` here
+        res.json(response);
         return;
       }
     }
 
     console.log('[GPT MAX ITERATIONS REACHED]', { iterations });
     res.json({
-      message:
-        "I've completed the requested actions, though context may be truncated.",
+      message: "I've completed the requested actions, though context may be truncated.",
       actions: executedActions,
       actionResults: executedActions.map(a => a.result),
       activeModule: null
@@ -202,7 +307,7 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// Example: ICS export endpoint (also using void returns)
+// /api/ical/:userId route
 app.get('/api/ical/:userId', async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
   try {
@@ -226,7 +331,7 @@ app.get('/api/ical/:userId', async (req: Request, res: Response): Promise<void> 
   }
 });
 
-// Health check (synchronous handler returning Response is allowed here)
+// /health route
 app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
