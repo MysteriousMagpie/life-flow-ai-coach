@@ -42,7 +42,27 @@ const backendActionExecutor = {
     }
     return results;
   },
-  // …other methods…
+ async executeAction(action: any, userId: string) {
+    const dataWithUserId = action.data ? { ...action.data, user_id: userId } : { user_id: userId };
+    switch (action.module) {
+      case 'meals':
+        return this.executeMealAction(action, dataWithUserId);
+      case 'tasks':
+        return this.executeTaskAction(action, dataWithUserId);
+      case 'workouts':
+        return this.executeWorkoutAction(action, dataWithUserId);
+      case 'reminders':
+        return this.executeReminderAction(action, dataWithUserId);
+      case 'time_blocks':
+        return this.executeTimeBlockAction(action, dataWithUserId);
+      case 'analysis':
+        return this.executeAnalysisAction(action, dataWithUserId);
+      default:
+        throw new Error(`Unknown module: ${action.module}`);
+    }
+  },
+
+  // ...keep other methods like executeMealAction, etc.
 };
 
 // **Corrected** `/api/gpt` route handler
