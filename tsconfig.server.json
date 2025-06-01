@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["server.ts", "src/**/*"],
+  "include": ["server.ts", "src/server/**/*", "src/services/**/*"],   // whatever backend folders you call
+  "exclude": ["src/pages", "src/components", "src/contexts", "**/*.tsx"],  // exclude React/TSX
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": ".",      
     "outDir": "dist",
     "module": "CommonJS",
     "target": "ES2020",
