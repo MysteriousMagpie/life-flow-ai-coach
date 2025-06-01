@@ -1,12 +1,29 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["server.ts", "src/server/**/*", "src/services/**/*"],   // whatever backend folders you call
-  "exclude": ["src/pages", "src/components", "src/contexts", "**/*.tsx"],  // exclude React/TSX
+
+  "include": [
+    "server.ts",
+    "src/server/**/*",
+    "src/services/**/*"
+  ],
+
+  "exclude": [
+    "src/**/ui/**",
+    "src/**/components/**",
+    "src/**/pages/**",
+    "src/**/contexts/**",
+    "**/*.tsx",
+    "tests",
+    "vite.config.*",
+    "tsconfig.*.json"
+  ],
+
   "compilerOptions": {
-    "rootDir": ".",      
+    "rootDir": ".",
     "outDir": "dist",
     "module": "CommonJS",
     "target": "ES2020",
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "jsx": "preserve"          // <- stops JSX errors if anything sneaks through
   }
 }
