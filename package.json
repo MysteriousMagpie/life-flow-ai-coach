@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "start-server-and-test dev http://localhost:8080 'playwright test'",
-    "start:backend": "ts-node --project tsconfig.server.json server.ts"
+    "start:backend": "ts-node --project tsconfig.server.json server.ts",
+    "build:backend": "tsc -p tsconfig.server.json",
+    "start:prod": "node dist/server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
