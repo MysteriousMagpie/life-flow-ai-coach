@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    strictPort: true, // force it to crash if 8080 is unavailable
   },
   plugins: [
     react(),
