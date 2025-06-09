@@ -316,7 +316,9 @@ app.get('/api/ical/:userId', async (req: Request, res: Response): Promise<void> 
     const userTimeBlocks = timeBlocks.filter(
       block => block.user_id === userId || block.user_id === 'temp-user'
     );
-    const { CalendarGenerator } = await import('./src/lib/calendar.js');
+    // Use extensionless import so ts-node can resolve the TypeScript file in
+    // development and Node can load the compiled JavaScript in production.
+    const { CalendarGenerator } = await import('./src/lib/calendar');
     const icsContent = CalendarGenerator.timeBlocksToICS(userTimeBlocks);
 
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
