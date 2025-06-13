@@ -5,7 +5,7 @@
 
 ### Running Tests
 ```bash
-# From /client directory
+# From the repository root
 
 # Run all tests
 pnpm test
