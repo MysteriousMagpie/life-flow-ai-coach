@@ -26,8 +26,12 @@ export async function parseFunctionCall(functionName: string, args: any): Promis
     return result;
   } catch (error) {
     console.error(`[FUNCTION CALL ERROR] ${functionName}:`, error);
-    return { success: false, error: error.message };
-  }
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    } else {
+    return { success: false, error: 'An unknown error occurred' };
+    }
+  } 
 }
 
 export async function getGptResponseWithFunctions(input: string) {

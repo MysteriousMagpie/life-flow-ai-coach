@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+
+  "include": [
+    "server.ts",
+    "src/server/**/*",
+    "src/services/**/*"
+  ],
+
+  "exclude": [
+    "src/**/ui/**",
+    "src/**/components/**",
+    "src/**/pages/**",
+    "src/**/contexts/**",
+    "**/*.tsx",
+    "tests",
+    "vite.config.*",
+    "tsconfig.*.json"
+  ],
+
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "module": "CommonJS",
+    "target": "ES2020",
+    "moduleResolution": "Node",
+    "types": ["node"],
+    "jsx": "preserve"          // <- stops JSX errors if anything sneaks through
+  }
+}
