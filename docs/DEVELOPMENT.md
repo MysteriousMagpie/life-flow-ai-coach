@@ -9,7 +9,7 @@
 | `pnpm run build` | Build the project for production (client) |
 | `pnpm run preview` | Preview the production build locally (client) |
 | `pnpm run lint` | Run ESLint for code quality checks (client) |
-| `pnpm test` | Run the test suite with Vitest (client) |
+| `pnpm test` | Run the unit test suite with Vitest (root) |
 | `pnpm run test:e2e` | Run end-to-end tests with Playwright (client) |
 | `npm run server` | Start the Express backend server |
 
@@ -30,8 +30,8 @@
    ```bash
    # Run linting (from /client directory)
    pnpm run lint
-   
-   # Run tests (from /client directory)
+
+   # Run tests (from repository root)
    pnpm test
    ```
 
