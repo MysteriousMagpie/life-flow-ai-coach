@@ -14,6 +14,7 @@
     "start:backend": "ts-node --project tsconfig.server.json server.ts",
     "build:backend": "tsc -p tsconfig.server.json",
     "start:prod": "node dist/server.js"
+    "test": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
