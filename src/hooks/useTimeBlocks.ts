@@ -19,7 +19,7 @@ export const useTimeBlocks = () => {
   } = useQuery({
     queryKey: ['timeBlocks'],
     queryFn: timeBlocksService.getAll,
-    enabled: !!user, // Only fetch when user is authenticated
+    enabled: !!user,
   });
 
   // Set up realtime subscription
@@ -38,15 +38,22 @@ export const useTimeBlocks = () => {
         },
         (payload) => {
           console.log('Realtime time_blocks change:', payload);
-          // Refetch time blocks data when changes occur
+          
+          // Invalidate and refetch to ensure UI updates
           queryClient.invalidateQueries({ queryKey: ['timeBlocks'] });
           
-          // Show notification for new time blocks
+          // Only show notification for successful UI updates
           if (payload.eventType === 'INSERT') {
-            toast({
-              title: "Time Block Added",
-              description: `New time block "${payload.new.title}" has been scheduled`,
-            });
+            // Wait a bit for the query to update, then show toast
+            setTimeout(() => {
+              const updatedTimeBlocks = queryClient.getQueryData(['timeBlocks']) as TimeBlock[] | undefined;
+              if (updatedTimeBlocks?.some(block => block.id === payload.new.id)) {
+                toast({
+                  title: "Time Block Scheduled",
+                  description: `"${payload.new.title}" has been added to your schedule`,
+                });
+              }
+            }, 500);
           }
         }
       )
@@ -59,12 +66,19 @@ export const useTimeBlocks = () => {
 
   const createMutation = useMutation({
     mutationFn: timeBlocksService.create,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['timeBlocks'] });
-      toast({
-        title: "Success",
-        description: "Time block created successfully",
-      });
+      
+      // Only show toast after confirming UI update
+      setTimeout(() => {
+        const updatedTimeBlocks = queryClient.getQueryData(['timeBlocks']) as TimeBlock[] | undefined;
+        if (updatedTimeBlocks?.some(block => block.id === data.id)) {
+          toast({
+            title: "Success",
+            description: `"${data.title}" has been scheduled`,
+          });
+        }
+      }, 300);
     },
     onError: (error: any) => {
       toast({
@@ -78,12 +92,19 @@ export const useTimeBlocks = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateTimeBlock }) =>
       timeBlocksService.update(id, updates),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['timeBlocks'] });
-      toast({
-        title: "Success",
-        description: "Time block updated successfully",
-      });
+      
+      // Only show toast after confirming UI update
+      setTimeout(() => {
+        const updatedTimeBlocks = queryClient.getQueryData(['timeBlocks']) as TimeBlock[] | undefined;
+        if (updatedTimeBlocks?.some(block => block.id === data.id)) {
+          toast({
+            title: "Success",
+            description: "Time block updated successfully",
+          });
+        }
+      }, 300);
     },
     onError: (error: any) => {
       toast({

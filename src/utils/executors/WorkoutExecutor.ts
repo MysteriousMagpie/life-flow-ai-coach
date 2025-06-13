@@ -1,4 +1,3 @@
-
 import { GPTAction } from '../gptParser';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { ActionResult } from './MealExecutor';
@@ -30,6 +29,9 @@ export class WorkoutExecutor {
           data: dataWithUserId,
           functionName: action.functionName
         };
+      case 'store_workout_plan':
+      case 'create_12_week_plan':
+        return this.storeWorkoutPlan(dataWithUserId);
       case 'create_workout_plan':
         return this.createWorkoutPlan(dataWithUserId);
       case 'create_fitness_program':
@@ -60,6 +62,150 @@ export class WorkoutExecutor {
             throw new Error(`Unsupported workout action: ${action.type}`);
         }
     }
+  }
+
+  private async storeWorkoutPlan(data: any): Promise<ActionResult> {
+    console.log('[STORING WORKOUT PLAN]', data);
+    
+    const plan = data.plan || data.workoutPlan || data;
+    const workouts = this.parseWorkoutPlan(plan, data.user_id);
+    
+    let createdCount = 0;
+    for (const workout of workouts) {
+      try {
+        this.workoutsHook.createWorkout(workout);
+        createdCount++;
+      } catch (error) {
+        console.error('Failed to create workout:', error);
+      }
+    }
+
+    return {
+      success: true,
+      message: `Successfully stored ${createdCount} workouts from 12-week plan`,
+      data: { totalWorkouts: createdCount, planDuration: '12 weeks' },
+      functionName: 'store_workout_plan'
+    };
+  }
+
+  private parseWorkoutPlan(plan: any, userId: string): any[] {
+    const workouts = [];
+    const startDate = new Date();
+    
+    // Handle different plan formats
+    if (typeof plan === 'string') {
+      // Parse text-based plan
+      return this.parseTextWorkoutPlan(plan, userId, startDate);
+    }
+    
+    if (Array.isArray(plan)) {
+      // Array of weeks
+      plan.forEach((week, weekIndex) => {
+        const weekNumber = weekIndex + 1;
+        const phase = this.getPhase(weekNumber);
+        
+        if (week.workouts && Array.isArray(week.workouts)) {
+          week.workouts.forEach((workout, dayIndex) => {
+            const scheduledDate = new Date(startDate);
+            scheduledDate.setDate(startDate.getDate() + (weekIndex * 7) + dayIndex);
+            
+            workouts.push({
+              user_id: userId,
+              name: workout.name || `Week ${weekNumber} - ${workout.type || 'Workout'}`,
+              duration: workout.duration || 45,
+              intensity: workout.intensity || 'medium',
+              shceduled_date: scheduledDate.toISOString().split('T')[0],
+              is_completed: false
+            });
+          });
+        }
+      });
+    } else if (typeof plan === 'object') {
+      // Structured object with phases
+      for (let week = 1; week <= 12; week++) {
+        const phase = this.getPhase(week);
+        const sessions = this.generateWeekSessions(week, phase);
+        
+        sessions.forEach((session, dayIndex) => {
+          const scheduledDate = new Date(startDate);
+          scheduledDate.setDate(startDate.getDate() + ((week - 1) * 7) + (dayIndex * 2));
+          
+          workouts.push({
+            user_id: userId,
+            name: session.name,
+            duration: session.duration,
+            intensity: session.intensity,
+            shceduled_date: scheduledDate.toISOString().split('T')[0],
+            is_completed: false
+          });
+        });
+      }
+    }
+    
+    return workouts;
+  }
+
+  private getPhase(week: number): string {
+    if (week <= 4) return 'Foundation';
+    if (week <= 8) return 'Development';
+    return 'Peak';
+  }
+
+  private generateWeekSessions(weekNumber: number, phase: string): any[] {
+    const sessions = [];
+    
+    // Strength training session
+    sessions.push({
+      name: `${phase} Phase - Strength Training (Week ${weekNumber})`,
+      duration: weekNumber <= 4 ? 45 : weekNumber <= 8 ? 60 : 75,
+      intensity: weekNumber <= 4 ? 'medium' : 'high',
+      category: 'strength'
+    });
+    
+    // Cardio session
+    sessions.push({
+      name: `${phase} Phase - Cardio Session (Week ${weekNumber})`,
+      duration: weekNumber <= 4 ? 30 : weekNumber <= 8 ? 40 : 45,
+      intensity: weekNumber <= 4 ? 'medium' : weekNumber <= 8 ? 'medium' : 'high',
+      category: 'cardio'
+    });
+    
+    // Additional session for development and peak phases
+    if (weekNumber > 4) {
+      sessions.push({
+        name: `${phase} Phase - Functional Training (Week ${weekNumber})`,
+        duration: 45,
+        intensity: 'medium',
+        category: 'functional'
+      });
+    }
+    
+    return sessions;
+  }
+
+  private parseTextWorkoutPlan(planText: string, userId: string, startDate: Date): any[] {
+    const workouts = [];
+    
+    for (let week = 1; week <= 12; week++) {
+      const phase = this.getPhase(week);
+      const sessions = this.generateWeekSessions(week, phase);
+      
+      sessions.forEach((session, dayIndex) => {
+        const scheduledDate = new Date(startDate);
+        scheduledDate.setDate(startDate.getDate() + ((week - 1) * 7) + (dayIndex * 2));
+        
+        workouts.push({
+          user_id: userId,
+          name: session.name,
+          duration: session.duration,
+          intensity: session.intensity,
+          shceduled_date: scheduledDate.toISOString().split('T')[0],
+          is_completed: false
+        });
+      });
+    }
+    
+    return workouts;
   }
 
   private createWorkoutPlan(data: any): ActionResult {

@@ -1,282 +1,185 @@
 
-# Life Flow - AI-Powered Life Management Platform
+# Life Flow AI Coach
 
-[![CI Status](https://github.com/your-username/life-flow/workflows/CI/badge.svg)](https://github.com/your-username/life-flow/actions)
-[![Deploy Status](https://github.com/your-username/life-flow/workflows/Deploy/badge.svg)](https://github.com/your-username/life-flow/actions)
+Your intelligent companion for meal planning, task management, workout tracking, and life optimization.
 
-Life Flow is an intelligent life management platform that combines AI assistance with comprehensive planning tools for meals, workouts, tasks, and time blocking. Built with React, TypeScript, and Supabase.
+## Project Structure
 
-## 🚀 Quick Start
+This repository is split into client and server components:
+
+- `/client/` - React + Vite frontend application
+- `/server/` - Express backend server and API routes
+
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- Supabase account (for backend services)
-- OpenAI API key (for AI features)
+Make sure you have pnpm installed:
+```bash
+# Enable corepack (recommended)
+corepack enable
 
-### Installation
+# Or install pnpm globally
+npm install -g pnpm@8.15.0
+```
 
-1. **Clone the repository**
+### Frontend (Client)
+
+1. Navigate to the client directory:
    ```bash
-   git clone <YOUR_GIT_URL>
-   cd <YOUR_PROJECT_NAME>
+   cd client
    ```
 
-2. **Install dependencies**
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+3. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Configure your environment variables in `.env`:
+   ```
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_API_BASE_URL=http://localhost:3000
+   ```
+
+5. Start the development server:
+   ```bash
+   pnpm run dev
+   ```
+
+The client will be available at `http://localhost:5173`
+
+### Backend (Server)
+
+1. Navigate to the server directory:
+   ```bash
+   cd server
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. **Environment Setup**
-   
-   Create a `.env.local` file in the root directory:
-   ```env
-   # Supabase Configuration
-   VITE_SUPABASE_URL=your_supabase_project_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   
-   # OpenAI Configuration (for AI features)
-   OPENAI_API_KEY=your_openai_api_key
-   
-   # Server Configuration
-   PORT=5000
-   ```
-
-4. **Start the development servers**
+3. Copy environment variables:
    ```bash
-   # Start the client (port 8080)
-   npm run dev
-   
-   # In a separate terminal, start the server (port 5000)
-   npm run server
+   cp .env.example .env
    ```
 
-5. **Open your browser**
-   Navigate to `http://localhost:8080`
+4. Configure your environment variables in `.env`:
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   PORT=3000
+   CORS_ORIGIN=http://localhost:5173
+   ```
 
-## 📋 Available Scripts
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start the Vite development server |
-| `npm run build` | Build the project for production |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run ESLint for code quality checks |
-| `npm test` | Run the test suite with Vitest |
-| `npm run test:e2e` | Run end-to-end tests with Playwright |
-| `npm run server` | Start the Express backend server |
+The API server will be available at `http://localhost:3000`
 
-## 🛠️ Technology Stack
+## Development Workflow
 
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS, shadcn/ui components
-- **Backend**: Express.js, Supabase
-- **AI Integration**: OpenAI GPT with function calling
-- **Database**: PostgreSQL (via Supabase)
-- **Authentication**: Supabase Auth
-- **Testing**: Vitest, Playwright
-- **Deployment**: Vercel (frontend), Railway/Heroku (backend)
+1. Start the backend server from the `/server` directory
+2. Start the frontend development server from the `/client` directory using pnpm
+3. The frontend will make API requests to the backend
 
-## 🏗️ Project Structure
+## Deployment
 
-```
-src/
-├── components/          # React components
-│   ├── ui/             # Reusable UI components (shadcn/ui)
-│   ├── Dashboard.tsx   # Main dashboard
-│   ├── MealPlanner.tsx # Meal planning interface
-│   └── ...
-├── hooks/              # Custom React hooks
-├── lib/                # Utility libraries
-├── pages/              # Route components
-├── server/             # Express server code
-│   ├── gptFunctions.ts # OpenAI function definitions
-│   └── gptRouter.ts    # AI request handling
-├── services/           # Supabase service wrappers
-├── types/              # TypeScript type definitions
-└── utils/              # Helper utilities
-e2e/                    # End-to-end tests
-.github/workflows/      # CI/CD workflows
-```
+### Frontend Deployment (Vercel)
 
-## 🔧 Environment Variables
+1. Connect your repository to Vercel
+2. Set the root directory to `client`
+3. Configure environment variables in Vercel dashboard:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_API_BASE_URL` (your deployed backend URL)
+4. Deploy automatically on push to main branch
 
-### Required for Development
+### Backend Deployment (Railway/Render)
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `VITE_SUPABASE_URL` | Your Supabase project URL | `https://xxx.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous public key | `eyJ...` |
-| `OPENAI_API_KEY` | OpenAI API key for AI features | `sk-...` |
+#### Using Railway:
+1. Connect your repository to Railway
+2. Set the root directory to `server`
+3. Configure environment variables:
+   - `OPENAI_API_KEY`
+   - `PORT` (Railway will set this automatically)
+   - `CORS_ORIGIN` (your deployed frontend URL)
+4. Deploy using the Procfile
 
-### Optional
+#### Using Render:
+1. Connect your repository to Render
+2. Choose "Web Service"
+3. Set the root directory to `server`
+4. Build command: `npm install && npm run build`
+5. Start command: `npm run start`
+6. Configure environment variables in Render dashboard
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `5000` |
-
-## 🚢 Deployment
-
-### Vercel Deployment
-
-This project is configured for deployment on Vercel with separate environments:
-
-#### Development Deployment
+#### Using Docker:
 ```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy to development environment
-vercel --prebuilt
+cd server
+docker build -t life-flow-server .
+docker run -p 3000:3000 -e OPENAI_API_KEY=your_key life-flow-server
 ```
 
-#### Production Deployment
-```bash
-# Deploy to production environment
-vercel --prod
-```
+## Database Setup
 
-#### Environment Configuration
+This project uses Supabase for the database. Make sure to:
 
-1. **Vercel Dashboard Setup**:
-   - Create "Development" and "Production" environments in your Vercel project
-   - Set environment variables for each environment:
-     - `@openai_api_key` - Your OpenAI API key
-     - `@supabase_url` - Your Supabase project URL
-     - `@supabase_anon_key` - Your Supabase anonymous key
+1. Create a Supabase project
+2. Run the database migrations
+3. Configure the environment variables
 
-2. **Environment Variables**:
-   - Development: Use development/staging Supabase project
-   - Production: Use production Supabase project
-   - Separate OpenAI API keys can be used for cost management
+### Seed Database
 
-3. **API Routes**:
-   - The `/api/gpt` endpoint is automatically configured for serverless deployment
-   - Health check available at `/health`
-
-#### Vercel Configuration
-
-The project includes a `vercel.json` file with:
-- Automatic build configuration
-- API route handling
-- Environment variable mapping
-- SPA routing support
-
-### Manual Deployment
+To populate your local Supabase project with dummy data:
 
 ```bash
-# Build the project
-npm run build
-
-# Preview the build
-npm run preview
+pnpm ts-node scripts/seed.ts
 ```
 
-### Backend (Railway/Heroku)
+Make sure to set your `SUPABASE_SERVICE_ROLE_KEY` environment variable before running the seed script.
 
-1. Create a new service on Railway or Heroku
-2. Connect your GitHub repository
-3. Set the `OPENAI_API_KEY` environment variable
-4. Deploy the server using the provided workflows
+## Features
 
-## 🧪 Testing
+- **AI Planning Assistant**: Chat with GPT to plan meals, tasks, and workouts
+- **Meal Planning**: Create and manage meal plans with nutrition tracking
+- **Task Management**: Organize daily tasks and track progress
+- **Workout Planning**: Schedule and track fitness routines
+- **Time Blocking**: Plan your day with time-blocked scheduling
+- **Reminder System**: Set up important reminders
 
-### Unit Tests
-```bash
-# Run all tests
-npm test
+## Technology Stack
 
-# Run tests in watch mode
-npm run test:watch
+### Frontend
+- React 18 with TypeScript
+- Vite for fast development
+- Tailwind CSS for styling
+- Shadcn/ui components
+- React Query for state management
+- React Router for navigation
+- Package management with pnpm
 
-# Run tests with coverage
-npm run test:coverage
-```
+### Backend
+- Express.js
+- OpenAI GPT integration
+- Supabase for database and authentication
 
-### End-to-End Tests
-```bash
-# Install Playwright browsers
-npx playwright install
-
-# Run e2e tests
-npm run test:e2e
-
-# Run e2e tests with UI
-npm run test:e2e -- --ui
-```
-
-#### E2E Test Configuration
-
-Set up environment variables for testing:
-```bash
-# .env.local (for local testing)
-TEST_EMAIL=test@example.com
-TEST_PASSWORD=testpassword123
-VITE_SUPABASE_URL=your_test_supabase_url
-VITE_SUPABASE_ANON_KEY=your_test_supabase_key
-```
-
-## 📊 Features
-
-- **🤖 AI Assistant**: Natural language interaction with OpenAI GPT
-- **🍽️ Meal Planning**: Create and schedule meals with nutritional tracking
-- **💪 Workout Planning**: Schedule and track fitness activities
-- **📝 Task Management**: Organize and prioritize daily tasks
-- **⏰ Time Blocking**: Visual calendar for time management
-- **🔔 Reminders**: Smart notification system
-- **📈 Analytics**: Progress tracking and insights
-- **📅 Calendar Export**: Export schedules to .ics format
-- **🔐 Authentication**: Secure user authentication via Supabase
-- **💬 Real-time Chat**: Streaming AI responses with optimistic UI
-
-## 🗺️ Roadmap
-
-### Current Release (v1.0)
-- [x] Core dashboard and navigation
-- [x] Basic CRUD for meals, workouts, tasks
-- [x] OpenAI function calling integration
-- [x] Calendar export functionality
-- [x] CI/CD pipeline
-- [x] E2E testing with Playwright
-- [x] Vercel deployment configuration
-
-### Next Release (v1.1)
-- [ ] Mobile responsive design improvements
-- [ ] Push notifications
-- [ ] Advanced analytics and reporting
-- [ ] Social features and sharing
-- [ ] Integrations (Google Calendar, Fitbit, etc.)
-
-### Future Releases
-- [ ] Mobile app (React Native)
-- [ ] Offline support
-- [ ] Team collaboration features
-- [ ] Advanced AI planning algorithms
-- [ ] Habit tracking
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly with `pnpm run test:e2e` (from client directory)
+5. Submit a pull request
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: [Lovable Docs](https://docs.lovable.dev/)
-- **Community**: [Discord](https://discord.com/channels/1119885301872070706/1280461670979993613)
-- **Issues**: [GitHub Issues](https://github.com/your-username/life-flow/issues)
-
-## 🙏 Acknowledgments
-
-- Built with [Lovable](https://lovable.dev)
-- UI components by [shadcn/ui](https://ui.shadcn.com/)
-- Icons by [Lucide](https://lucide.dev/)
-- Backend by [Supabase](https://supabase.com/)
-- Deployed on [Vercel](https://vercel.com/)
-
+This project is licensed under the MIT License.
