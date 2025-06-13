@@ -13,7 +13,7 @@
     "test:e2e": "start-server-and-test dev http://localhost:8080 'playwright test'",
     "start:backend": "ts-node --project tsconfig.server.json server.ts",
     "build:backend": "tsc -p tsconfig.server.json",
-    "start:prod": "node dist/server.js"
+    "start:prod": "node dist/server.js",
     "test": "vitest"
   },
   "dependencies": {
@@ -91,9 +91,7 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
-    "lovable-tagger": "^1.1.7",
     "playwright": "^1.52.0",
-    "postcss": "^8.4.47",
     "start-server-and-test": "^2.0.12",
     "lovable-tagger": "^1.1.8",
     "postcss": "^8.5.4",
