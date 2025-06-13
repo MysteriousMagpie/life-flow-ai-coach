@@ -19,7 +19,7 @@ export const useMeals = () => {
   } = useQuery({
     queryKey: ['meals'],
     queryFn: mealsService.getAll,
-    enabled: !!user, // Only fetch when user is authenticated
+    enabled: !!user,
   });
 
   // Set up realtime subscription
@@ -38,15 +38,22 @@ export const useMeals = () => {
         },
         (payload) => {
           console.log('Realtime meals change:', payload);
-          // Refetch meals data when changes occur
+          
+          // Invalidate and refetch to ensure UI updates
           queryClient.invalidateQueries({ queryKey: ['meals'] });
           
-          // Show notification for new meals
+          // Only show notification for successful UI updates
           if (payload.eventType === 'INSERT') {
-            toast({
-              title: "Meal Added",
-              description: `New meal "${payload.new.name}" has been added`,
-            });
+            // Wait a bit for the query to update, then show toast
+            setTimeout(() => {
+              const updatedMeals = queryClient.getQueryData(['meals']) as Meal[] | undefined;
+              if (updatedMeals?.some(meal => meal.id === payload.new.id)) {
+                toast({
+                  title: "Meal Added",
+                  description: `"${payload.new.name}" has been added to your meal planner`,
+                });
+              }
+            }, 500);
           }
         }
       )
@@ -59,31 +66,72 @@ export const useMeals = () => {
 
   const createMutation = useMutation({
     mutationFn: mealsService.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['meals'] });
-      toast({
-        title: "Success",
-        description: "Meal created successfully",
-      });
+    onMutate: async (newMeal) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['meals'] });
+
+      // Snapshot the previous value
+      const previousMeals = queryClient.getQueryData(['meals']);
+
+      // Optimistically update to the new value
+      const optimisticMeal = {
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        ...newMeal,
+      };
+      
+      queryClient.setQueryData(['meals'], (old: Meal[] = []) => [optimisticMeal, ...old]);
+
+      return { previousMeals, optimisticMeal };
     },
-    onError: (error: any) => {
+    onError: (error: any, newMeal, context) => {
+      // Roll back on error
+      if (context?.previousMeals) {
+        queryClient.setQueryData(['meals'], context.previousMeals);
+      }
       toast({
         title: "Error",
         description: error.message || "Failed to create meal",
         variant: "destructive",
       });
     },
+    onSuccess: (data, variables, context) => {
+      // Ensure UI is updated before showing success toast
+      queryClient.invalidateQueries({ queryKey: ['meals'] });
+      
+      // Wait for the query to update, then show success toast
+      setTimeout(() => {
+        const updatedMeals = queryClient.getQueryData(['meals']) as Meal[] | undefined;
+        if (updatedMeals?.some(meal => meal.name === data.name)) {
+          toast({
+            title: "Success",
+            description: `"${data.name}" has been added to your meal planner`,
+          });
+        }
+      }, 300);
+    },
+    onSettled: () => {
+      // Always refetch to sync with server state
+      queryClient.invalidateQueries({ queryKey: ['meals'] });
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateMeal }) =>
       mealsService.update(id, updates),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['meals'] });
-      toast({
-        title: "Success",
-        description: "Meal updated successfully",
-      });
+      
+      // Only show toast after confirming UI update
+      setTimeout(() => {
+        const updatedMeals = queryClient.getQueryData(['meals']) as Meal[] | undefined;
+        if (updatedMeals?.some(meal => meal.id === data.id)) {
+          toast({
+            title: "Success",
+            description: "Meal updated successfully",
+          });
+        }
+      }, 300);
     },
     onError: (error: any) => {
       toast({

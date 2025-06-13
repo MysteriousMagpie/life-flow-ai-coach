@@ -1,9 +1,16 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMeals } from '@/hooks/useMeals';
+import { useWorkouts } from '@/hooks/useWorkouts';
+import { useTimeBlocks } from '@/hooks/useTimeBlocks';
+import { format, startOfWeek, endOfWeek, isToday } from 'date-fns';
+import { TodayOverview } from './dashboard/TodayOverview';
+import { WeeklyWorkouts } from './dashboard/WeeklyWorkouts';
+import { TodayMeals } from './dashboard/TodayMeals';
+import { WeeklyGoals } from './dashboard/WeeklyGoals';
+import { ActiveModule } from './dashboard/ActiveModule';
 
 interface DashboardProps {
   activeModule?: string | null;
@@ -11,6 +18,9 @@ interface DashboardProps {
 
 export const Dashboard = ({ activeModule }: DashboardProps) => {
   const { user, loading } = useAuth();
+  const { meals } = useMeals();
+  const { workouts } = useWorkouts();
+  const { timeBlocks } = useTimeBlocks();
 
   // Show loading state
   if (loading) {
@@ -24,85 +34,63 @@ export const Dashboard = ({ activeModule }: DashboardProps) => {
   // Show unauthenticated message
   if (!user) {
     return (
-      <Card className="p-6 text-center">
+      <Card className="p-4 sm:p-6 text-center">
         <h3 className="text-lg font-semibold mb-2">Please Log In</h3>
-        <p className="text-gray-600">You need to be logged in to view your dashboard.</p>
+        <p className="text-gray-600 text-sm sm:text-base">You need to be logged in to view your dashboard.</p>
       </Card>
     );
   }
 
+  // Get current week's workouts
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  
+  const thisWeekWorkouts = workouts.filter(workout => {
+    if (!workout.shceduled_date) return false;
+    const workoutDate = new Date(workout.shceduled_date);
+    return workoutDate >= weekStart && workoutDate <= weekEnd;
+  }).sort((a, b) => new Date(a.shceduled_date).getTime() - new Date(b.shceduled_date).getTime());
+
+  // Get today's meals
+  const today = format(now, 'yyyy-MM-dd');
+  const todaysMeals = meals.filter(meal => meal.planned_date === today)
+    .sort((a, b) => {
+      const order = { breakfast: 1, morning_snack: 2, lunch: 3, afternoon_snack: 4, dinner: 5, evening_snack: 6 };
+      return (order[a.meal_type] || 999) - (order[b.meal_type] || 999);
+    });
+
+  // Get today's meal time blocks
+  const todayMealBlocks = timeBlocks.filter(block => {
+    if (!block.start_time || block.category !== 'meal') return false;
+    return isToday(new Date(block.start_time));
+  }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
+  // Today's stats - Note: meals don't have is_completed field, so we'll show planned vs total
   const todayStats = {
-    meals: { planned: 3, completed: 1 },
-    workouts: { planned: 1, completed: 0 },
-    tasks: { total: 8, completed: 3 },
-    wellbeing: { mood: 7, journaled: false }
+    meals: { planned: todaysMeals.length, completed: 0 }, // Remove completed count since field doesn't exist
+    workouts: { 
+      planned: thisWeekWorkouts.filter(w => isToday(new Date(w.shceduled_date))).length,
+      completed: thisWeekWorkouts.filter(w => isToday(new Date(w.shceduled_date)) && w.is_completed).length
+    },
+    tasks: { total: 8, completed: 3 }, // Keep existing mock data
+    wellbeing: { mood: 7, journaled: false } // Keep existing mock data
   };
 
   const weeklyGoals = [
-    { name: 'Healthy Meals', progress: 60, color: 'bg-green-500' },
-    { name: 'Exercise', progress: 40, color: 'bg-blue-500' },
-    { name: 'Creative Time', progress: 25, color: 'bg-purple-500' },
-    { name: 'Sleep Schedule', progress: 80, color: 'bg-indigo-500' }
+    { name: 'Healthy Meals', progress: todayStats.meals.planned > 0 ? 75 : 0, color: 'bg-green-500' }, // Use fixed progress since we can't track completion
+    { name: 'Exercise', progress: Math.min(100, (todayStats.workouts.completed / Math.max(1, todayStats.workouts.planned)) * 100), color: 'bg-blue-500' },
+    { name: 'Creative Time', progress: 25, color: 'bg-purple-500' }, // Keep existing
+    { name: 'Sleep Schedule', progress: 80, color: 'bg-indigo-500' } // Keep existing
   ];
 
   return (
-    <div className="space-y-4">
-      {/* Today's Overview */}
-      <Card className="p-4 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-        <h3 className="font-semibold text-gray-800 mb-3">Today's Progress</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Meals</span>
-            <Badge variant="outline" className="bg-green-50 text-green-700">
-              {todayStats.meals.completed}/{todayStats.meals.planned}
-            </Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Workouts</span>
-            <Badge variant="outline" className="bg-blue-50 text-blue-700">
-              {todayStats.workouts.completed}/{todayStats.workouts.planned}
-            </Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Tasks</span>
-            <Badge variant="outline" className="bg-purple-50 text-purple-700">
-              {todayStats.tasks.completed}/{todayStats.tasks.total}
-            </Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Mood</span>
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-              {todayStats.wellbeing.mood}/10
-            </Badge>
-          </div>
-        </div>
-      </Card>
-
-      {/* Weekly Goals */}
-      <Card className="p-4 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-        <h3 className="font-semibold text-gray-800 mb-3">Weekly Goals</h3>
-        <div className="space-y-3">
-          {weeklyGoals.map((goal, index) => (
-            <div key={index} className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">{goal.name}</span>
-                <span className="text-gray-800 font-medium">{goal.progress}%</span>
-              </div>
-              <Progress value={goal.progress} className="h-2" />
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Active Module Indicator */}
-      {activeModule && (
-        <Card className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 shadow-lg">
-          <h3 className="font-semibold mb-1">Active Module</h3>
-          <p className="text-sm text-blue-100 capitalize">
-            {activeModule.replace('-', ' ')} module is processing...
-          </p>
-        </Card>
-      )}
+    <div className="space-y-4 w-full">
+      <TodayOverview stats={todayStats} />
+      <WeeklyWorkouts workouts={thisWeekWorkouts} />
+      <TodayMeals meals={todaysMeals} mealBlocks={todayMealBlocks} />
+      <WeeklyGoals goals={weeklyGoals} />
+      <ActiveModule activeModule={activeModule} />
     </div>
   );
 };

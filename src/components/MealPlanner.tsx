@@ -60,14 +60,15 @@ export const MealPlanner = () => {
   }
 
   return (
-    <Card className="p-4 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-      <h3 className="font-semibold text-gray-800 mb-4">Weekly Meal Planner</h3>
+    <Card className="p-3 sm:p-4 bg-white/80 backdrop-blur-sm border-0 shadow-lg w-full">
+      <h3 className="font-semibold text-gray-800 mb-4 text-sm sm:text-base">Weekly Meal Planner</h3>
       
-      <div className="mb-4 flex gap-2 flex-wrap">
+      {/* Mobile-optimized form */}
+      <div className="mb-4 space-y-2 sm:space-y-0 sm:flex sm:gap-2 sm:flex-wrap">
         <select 
           value={selectedDay} 
           onChange={(e) => setSelectedDay(e.target.value)} 
-          className="border rounded px-3 py-2"
+          className="w-full sm:w-auto border rounded px-3 py-2 text-sm"
         >
           {days.map(day => <option key={day} value={day}>{day}</option>)}
         </select>
@@ -75,7 +76,7 @@ export const MealPlanner = () => {
         <select 
           value={selectedTime} 
           onChange={(e) => setSelectedTime(e.target.value)} 
-          className="border rounded px-3 py-2"
+          className="w-full sm:w-auto border rounded px-3 py-2 text-sm"
         >
           {times.map(time => (
             <option key={time} value={time}>
@@ -88,29 +89,30 @@ export const MealPlanner = () => {
           value={mealInput}
           onChange={(e) => setMealInput(e.target.value)}
           placeholder="Enter meal name"
-          className="flex-1 min-w-48"
+          className="w-full sm:flex-1 sm:min-w-48 text-sm"
         />
         
         <Button 
           onClick={addMeal} 
           disabled={isCreating || !mealInput.trim()}
-          className="flex items-center gap-2"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm"
         >
           {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           Add Meal
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Mobile-optimized grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {days.map((day) => (
-          <Card key={day} className="p-3">
-            <h4 className="font-semibold text-gray-700 mb-2">{day}</h4>
+          <Card key={day} className="p-2 sm:p-3">
+            <h4 className="font-semibold text-gray-700 mb-2 text-xs sm:text-sm">{day}</h4>
             {times.map(time => {
               const dayMeals = getMealsForDayAndTime(day, time);
               return (
-                <div key={time} className="mb-3">
+                <div key={time} className="mb-2 sm:mb-3">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm text-gray-600 capitalize">
+                    <span className="font-medium text-xs text-gray-600 capitalize">
                       {time}:
                     </span>
                     <Badge variant="outline" className="text-xs">
@@ -121,13 +123,13 @@ export const MealPlanner = () => {
                     {dayMeals.length > 0 ? (
                       dayMeals.map(meal => (
                         <div key={meal.id} className="flex items-center justify-between bg-gray-50 rounded px-2 py-1">
-                          <span className="text-xs text-gray-700">{meal.name}</span>
+                          <span className="text-xs text-gray-700 truncate pr-1">{meal.name}</span>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => deleteMeal(meal.id)}
                             disabled={isDeleting}
-                            className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+                            className="h-5 w-5 p-0 hover:bg-red-100 hover:text-red-600 flex-shrink-0"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
