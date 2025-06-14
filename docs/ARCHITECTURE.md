@@ -15,21 +15,12 @@
 ## Project Structure
 
 ```
+client/
+└── src/                # React application
+
 src/
-├── components/          # React components
-│   ├── ui/             # Reusable UI components (shadcn/ui)
-│   ├── Dashboard.tsx   # Main dashboard
-│   ├── MealPlanner.tsx # Meal planning interface
-│   └── ...
-├── hooks/              # Custom React hooks
-├── lib/                # Utility libraries
-├── pages/              # Route components
-├── server/             # Express server code
-│   ├── gptFunctions.ts # OpenAI function definitions
-│   └── gptRouter.ts    # AI request handling
-├── services/           # Supabase service wrappers
-├── types/              # TypeScript type definitions
-└── utils/              # Helper utilities
+└── server/             # Backend logic consumed by `server.ts`
+
 e2e/                    # End-to-end tests
 .github/workflows/      # CI/CD workflows
 ```
