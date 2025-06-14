@@ -39,3 +39,6 @@ test-results/
 # Package locks
 bun.lockb
 
+# Ignore local .env files
+bun.lockb
+package-lock.json
