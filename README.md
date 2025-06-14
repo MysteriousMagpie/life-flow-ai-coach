@@ -49,6 +49,7 @@ npm install -g pnpm@8.15.0
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    VITE_API_BASE_URL=http://localhost:3000
+   API_BASE_URL=http://localhost:5000
    ```
 
 5. Start the development server:
@@ -111,6 +112,7 @@ The API server will be available at `http://localhost:3000`
    - `VITE_SUPABASE_URL` / `SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY` / `SUPABASE_ANON_KEY`
    - `VITE_API_BASE_URL` (your deployed backend URL)
+   - `API_BASE_URL` (your deployed backend URL)
 4. Deploy automatically on push to main branch
 
 ### Backend Deployment (Railway/Render)

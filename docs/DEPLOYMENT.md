@@ -27,9 +27,12 @@ vercel --prod
 1. **Vercel Dashboard Setup**:
    - Create "Development" and "Production" environments in your Vercel project
    - Set environment variables for each environment:
-     - `VITE_SUPABASE_URL` / `SUPABASE_URL` - Your Supabase project URL
-     - `VITE_SUPABASE_ANON_KEY` / `SUPABASE_ANON_KEY` - Your Supabase anonymous key
-     - `VITE_API_BASE_URL` - Your backend API URL
+read-base-url-from-environment-variable
+     - `VITE_SUPABASE_URL` - Your Supabase project URL
+     - `VITE_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+    - `VITE_API_BASE_URL` - Your backend API URL
+    - `API_BASE_URL` - Your backend API URL
+
 
 2. **Package Manager Configuration**:
    - Vercel automatically detects pnpm via the `.npmrc` file in `/client`
@@ -77,6 +80,7 @@ pnpm run preview
 | `VITE_SUPABASE_URL` / `SUPABASE_URL` | Your Supabase project URL | `https://xxx.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` / `SUPABASE_ANON_KEY` | Supabase anonymous public key | `eyJ...` |
 | `VITE_API_BASE_URL` | Backend API URL | `http://localhost:3000` |
+| `API_BASE_URL` | Backend API URL | `http://localhost:5000` |
 
 ### Optional
 
