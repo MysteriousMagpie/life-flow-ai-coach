@@ -5,14 +5,6 @@ Your intelligent companion for meal planning, task management, workout tracking,
 
 ## Project Structure
 
-This repository is split into client and server components:
-
-- `/client/` - React + Vite frontend application
-- `/src/` - TypeScript backend utilities used by `server.ts`
-- `/server/` - Express backend server and API routes (legacy)
-
-`src/` still contains some legacy client code that is no longer used. The active
-React application lives entirely under `client/src`.
 
 ## Quick Start
 
@@ -61,45 +53,30 @@ The client will be available at `http://localhost:5173`
 
 ### Backend (Server)
 
-1. Navigate to the server directory:
+
    ```bash
-   cd server
+   pnpm install
    ```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
 
-3. Copy environment variables:
-   ```bash
-   cp .env.example .env
    ```
-
-4. Configure your environment variables in `.env`:
-   ```
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
    OPENAI_API_KEY=your_openai_api_key
    PORT=3000
    CORS_ORIGIN=http://localhost:5173
    ```
 
-5. Create a `.env` file in the repository root and add your Supabase credentials:
-   ```
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
 
-6. Start the development server:
    ```bash
-   npm run dev
+   pnpm run server
    ```
 
 The API server will be available at `http://localhost:3000`
 
 ## Development Workflow
 
-1. Start the backend server from the `/server` directory
-2. Start the frontend development server from the `/client` directory using pnpm
+
 3. The frontend will make API requests to the backend
 
 ## Deployment
@@ -119,7 +96,7 @@ The API server will be available at `http://localhost:3000`
 
 #### Using Railway:
 1. Connect your repository to Railway
-2. Set the root directory to `server`
+2. Set the root directory to the repository root
 3. Configure environment variables:
    - `OPENAI_API_KEY`
    - `PORT` (Railway will set this automatically)
@@ -129,17 +106,11 @@ The API server will be available at `http://localhost:3000`
 #### Using Render:
 1. Connect your repository to Render
 2. Choose "Web Service"
-3. Set the root directory to `server`
-4. Build command: `npm install && npm run build`
-5. Start command: `npm run start`
+3. Set the root directory to the repository root
+4. Build command: `pnpm install && pnpm run build:backend`
+
 6. Configure environment variables in Render dashboard
 
-#### Using Docker:
-```bash
-cd server
-docker build -t life-flow-server .
-docker run -p 3000:3000 -e OPENAI_API_KEY=your_key life-flow-server
-```
 
 ## Database Setup
 
@@ -158,6 +129,26 @@ pnpm ts-node scripts/seed.ts
 ```
 
 Make sure to set your `SUPABASE_SERVICE_ROLE_KEY` environment variable before running the seed script.
+
+### Supabase Functions
+
+The `supabase/functions/gpt-chat` directory contains an edge function used by the application to handle AI chat requests. It forwards user messages to OpenAI, processes function calls (like adding meals), and stores results in Supabase tables.
+
+#### Deploying Functions
+
+1. Install the Supabase CLI and log in:
+   ```bash
+   npm install -g supabase
+   supabase login
+   ```
+2. Link the CLI to your project:
+   ```bash
+   supabase link --project-ref <your-project-id>
+   ```
+3. Deploy the function:
+   ```bash
+   supabase functions deploy gpt-chat
+   ```
 
 ## Features
 
