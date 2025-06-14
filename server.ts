@@ -495,21 +495,21 @@ app.get('/api/ical/:userId', async (req: Request, res: Response): Promise<void> 
   try {
     console.log('[ICAL REQUEST]', { userId });
     const timeBlocks = await timeBlocksService.getAll();
-    const userTimeBlocks = timeBlocks.filter(
-      block => block.user_id === userId || block.user_id === 'temp-user'
-    );
     // Use extensionless import so ts-node can resolve the TypeScript file in
     // development and Node can load the compiled JavaScript in production.
     const { CalendarGenerator } = await import('./src/lib/calendar');
-    
+
     // Filter time blocks for the specific authenticated user only
     const userTimeBlocks = timeBlocks.filter(block => block.user_id === userId);
 
     if (userTimeBlocks.length === 0) {
       console.log('[ICAL NO DATA]', { userId, message: 'No time blocks found for user' });
+      return res.status(404).json({
+        message: 'No time blocks found for user',
+        error: 'No data'
+      });
     }
 
-    const { CalendarGenerator } = await import('./src/lib/calendar.js');
     const icsContent = CalendarGenerator.timeBlocksToICS(userTimeBlocks);
 
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');

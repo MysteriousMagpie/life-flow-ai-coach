@@ -22,7 +22,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Ignore local env files
 .env
 .env*
+# Allow example env files
+!.env.example
+!client/.env.example
 
 # Ignore local .env files
+.env.local
+.env.*.local
+
+# Testing
+test-results/
+
+# Package locks
+bun.lockb
+
+# Ignore local .env files
+bun.lockb
+package-lock.json
