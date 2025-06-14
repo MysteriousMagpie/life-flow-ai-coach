@@ -5,15 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "cd client && pnpm run dev",
-    "server": "ts-node-esm server.ts",
+    "server": "node server/index.js",
     "build": "cd client && pnpm run build",
-    "build:dev": "vite build --mode development",
+    "build:dev": "cd client && vite build --mode development",
     "lint": "cd client && pnpm run lint",
     "preview": "cd client && pnpm run preview",
     "test:e2e": "start-server-and-test dev http://localhost:8080 'playwright test'",
-    "start:backend": "ts-node --project tsconfig.server.json server.ts",
-    "build:backend": "tsc -p tsconfig.server.json",
-    "start:prod": "node dist/server.js",
+    "start:backend": "node server/index.js",
+    "build:backend": "echo 'no build step required for server'",
+    "start:prod": "node server/index.js",
     "test": "vitest"
   },
   "dependencies": {
