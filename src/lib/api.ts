@@ -1,5 +1,8 @@
 
-const SUPABASE_URL = "https://ceeobnncvfsqqliojsxn.supabase.co"
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
 export const sendChatMessage = async (message: string, messages: any[] = [], userId: string) => {
   try {
@@ -7,7 +10,7 @@ export const sendChatMessage = async (message: string, messages: any[] = [], use
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlZW9ibm5jdmZzcXFsaW9qc3huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxOTkwODksImV4cCI6MjA2Mzc3NTA4OX0.UJShCgS3BdR0KUKN5OPS_WJbjJgUKJhIMm1pbmXv9Bw'}`
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
       },
       body: JSON.stringify({ message, messages, userId })
     })
