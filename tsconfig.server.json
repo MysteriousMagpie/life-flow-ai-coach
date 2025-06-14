@@ -4,7 +4,10 @@
   "include": [
     "server.ts",
     "src/server/**/*",
-    "src/services/**/*"
+    "src/services/**/*",
+    "src/lib/**/*",
+    "src/utils/**/*",
+    "src/integrations/**/*"
   ],
 
   "exclude": [
