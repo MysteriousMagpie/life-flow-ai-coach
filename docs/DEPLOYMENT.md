@@ -73,6 +73,13 @@ pnpm run preview
 
 ## Environment Variables
 
+Before running the app locally, copy the provided example files:
+
+```bash
+cp .env.example .env
+cp client/.env.example client/.env
+```
+
 ### Required for Development
 
 | Variable | Description | Example |

@@ -83,10 +83,19 @@ The client will be available at `http://localhost:5173`
    CORS_ORIGIN=http://localhost:5173
    ```
 
-5. Create a `.env` file in the repository root and add your Supabase credentials:
+5. Copy the root example environment file and configure your server credentials (run from the repository root):
+   ```bash
+   cd ..
+   cp .env.example .env
+   ```
+   Edit `.env` and set:
    ```
    SUPABASE_URL=your_supabase_url
    SUPABASE_ANON_KEY=your_supabase_anon_key
+   OPENAI_API_KEY=your_openai_api_key
+   PORT=3000
+   CORS_ORIGIN=http://localhost:5173
+   API_BASE_URL=http://localhost:5000
    ```
 
 6. Start the development server:
