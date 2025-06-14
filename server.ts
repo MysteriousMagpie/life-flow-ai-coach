@@ -22,64 +22,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-
 // Backend action executor with specialized methods
-// Helper function to execute addMeal
-async function addMeal(args: any, userId: string) {
-  try {
-    console.log('[ADD MEAL] Executing with args:', args);
-    
-    const mealData = {
-      user_id: userId,
-      name: args.name,
-      meal_type: args.meal_type || 'breakfast',
-      planned_date: args.planned_date,
-      calories: args.calories || null,
-      ingredients: args.ingredients ? JSON.stringify(args.ingredients) : null,
-      instructions: args.instructions || null
-    };
-
-    const meal = await mealsService.create(mealData);
-    console.log('[ADD MEAL] Successfully created meal:', meal);
-
-    // Create time block for the meal
-    if (args.meal_type && args.planned_date) {
-      const mealTimes = {
-        breakfast: '08:00',
-        lunch: '12:30',
-        dinner: '18:30',
-        snack: '15:00'
-      };
-
-      const mealTime = mealTimes[args.meal_type] || '12:00';
-      const [hours, minutes] = mealTime.split(':').map(Number);
-      
-      const startTime = new Date(args.planned_date);
-      startTime.setHours(hours, minutes, 0, 0);
-      
-      const endTime = new Date(startTime);
-      endTime.setMinutes(endTime.getMinutes() + 30);
-
-      const timeBlockData = {
-        user_id: userId,
-        title: `${args.meal_type.charAt(0).toUpperCase() + args.meal_type.slice(1)}: ${args.name}`,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        category: 'meal'
-      };
-
-      await timeBlocksService.create(timeBlockData);
-      console.log('[ADD MEAL] Successfully created time block');
-    }
-
-    return { success: true, meal };
-  } catch (error) {
-    console.error('[ADD MEAL] Error:', error);
-    throw error;
-  }
-}
-
-// Backend action executor that uses services directly
 const backendActionExecutor = {
   async executeActions(actions: any[], userId: string): Promise<any[]> {
     const results: any[] = [];
@@ -259,15 +202,12 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
 
     let conversationMessages: OpenAI.ChatCompletionMessageParam[] = [];
     if (messages && Array.isArray(messages)) {
-      // Filter out any assistant messages that might have tool_calls to prevent duplication
-      conversationMessages = messages.filter(msg => 
-        !(msg.role === 'assistant' && msg.tool_calls)
-      );
+      conversationMessages = messages;
     } else if (message) {
       conversationMessages = [
         {
-          role: "system",
-          content: "You are a helpful life planning assistant. You have the following tools: addMeal (store meals in meal planner). Use addMeal whenever a user asks to create, add, or schedule a meal. Help users organize their meals, workouts, tasks, reminders, and schedule."
+          role: 'system',
+          content: 'You are a helpful life planning assistant…'
         },
         { role: 'user', content: message }
       ];
@@ -289,31 +229,8 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
           parameters: func.parameters
         })),
         function_call: 'auto',
-    // Convert gptFunctions to tools format
-    const tools = gptFunctions.map(func => ({
-      type: "function" as const,
-      function: {
-        name: func.name,
-        description: func.description,
-        parameters: func.parameters
-      }
-    }));
-
-    // Tool-calling loop - keep internal conversation separate from user-visible messages
-    let internalMessages = [...conversationMessages];
-
-    while (iterations < maxIterations) {
-      console.log(`[GPT ITERATION ${iterations + 1}]`, { messagesCount: internalMessages.length });
-
-      const params = {
-        model: "gpt-4o-mini" as const,
-        messages: internalMessages,
-        tools: tools,
-        tool_choice: "auto" as const,
         temperature: 0.7
-      };
-      
-      console.log('[PAYLOAD]', { toolCount: params.tools.length });
+      });
 
       const assistantMessage = completion.choices[0].message!;
       conversationMessages.push({
@@ -348,107 +265,16 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
               error: (functionError as Error).message
             })
           });
-      const completion = await openai.chat.completions.create(params);
-      const choice = completion.choices[0];
-      
-      console.log('[DEBUG] OpenAI Response:', {
-        finish_reason: choice.finish_reason,
-        has_tool_calls: !!choice.message.tool_calls,
-        tool_calls_count: choice.message.tool_calls?.length || 0
-      });
-
-      // Tool call round - handle internally without exposing to user
-      if (choice.finish_reason === "tool_calls") {
-        // Add assistant message with tool calls to internal conversation only
-        internalMessages.push({
-          role: "assistant",
-          content: choice.message.content,
-          tool_calls: choice.message.tool_calls
-        });
-
-        // Process each tool call
-        for (const toolCall of choice.message.tool_calls || []) {
-          if (toolCall.type === "function" && toolCall.function?.name === "addMeal") {
-            try {
-              console.log('[FUNCTION CALL] addMeal', toolCall.function.arguments);
-              const args = JSON.parse(toolCall.function.arguments);
-              await addMeal(args, userId);
-              
-              executedActions.push({
-                function: "addMeal",
-                arguments: args,
-                result: { success: true }
-              });
-
-              // Add tool response to internal conversation only
-              internalMessages.push({
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({ status: "success", message: "Meal added successfully" })
-              });
-
-              console.log('[FUNCTION RESULT] addMeal success');
-            } catch (error) {
-              console.error('[FUNCTION ERROR] addMeal:', error);
-              
-              internalMessages.push({
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({ status: "error", message: error.message })
-              });
-            }
-          } else {
-            // Handle other tool calls through existing system
-            try {
-              const functionName = toolCall.function?.name;
-              const args = JSON.parse(toolCall.function?.arguments || '{}');
-              
-              console.log(`[FUNCTION CALL] ${functionName}`, args);
-              
-              const result = await parseFunctionCall(functionName, args);
-              
-              executedActions.push({
-                function: functionName,
-                arguments: args,
-                result: result
-              });
-
-              internalMessages.push({
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: JSON.stringify(result)
-              });
-
-              console.log(`[FUNCTION RESULT] ${functionName}`, { success: result.success });
-            } catch (functionError) {
-              console.error('[FUNCTION EXECUTION ERROR]', functionError);
-              
-              internalMessages.push({
-                role: "tool",
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({
-                  success: false,
-                  error: functionError instanceof Error ? functionError.message : 'Unknown error'
-                })
-              });
-            }
-          }
         }
+
         iterations++;
         continue;
       } else {
-
-        continue; // Loop again for natural language response
-      } else {
-        // Normal exit - send final assistant content to client
         console.log('[GPT COMPLETE]', { iterations, actionsExecuted: executedActions.length });
         const response = {
           message: assistantMessage.content || "I'm here to help!",
           actions: executedActions,
           actionResults: executedActions.map(a => a.result),
-          message: choice.message.content || "I'm here to help you plan your life better!",
-          actions: executedActions,
-          actionResults: executedActions.map(action => action.result),
           activeModule: null
         };
         res.json(response);
@@ -484,14 +310,6 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
 // /api/ical/:userId route
 app.get('/api/ical/:userId', async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
-
-  // Validate that userId is provided and not empty
-  if (!userId || userId === 'undefined' || userId === 'null') {
-    return res.status(400).json({ 
-      message: 'User ID is required for calendar export',
-      error: 'Missing or invalid user ID'
-    });
-  }
   try {
     console.log('[ICAL REQUEST]', { userId });
     const timeBlocks = await timeBlocksService.getAll();
@@ -501,15 +319,6 @@ app.get('/api/ical/:userId', async (req: Request, res: Response): Promise<void> 
     // Use extensionless import so ts-node can resolve the TypeScript file in
     // development and Node can load the compiled JavaScript in production.
     const { CalendarGenerator } = await import('./src/lib/calendar');
-    
-    // Filter time blocks for the specific authenticated user only
-    const userTimeBlocks = timeBlocks.filter(block => block.user_id === userId);
-
-    if (userTimeBlocks.length === 0) {
-      console.log('[ICAL NO DATA]', { userId, message: 'No time blocks found for user' });
-    }
-
-    const { CalendarGenerator } = await import('./src/lib/calendar.js');
     const icsContent = CalendarGenerator.timeBlocksToICS(userTimeBlocks);
 
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
