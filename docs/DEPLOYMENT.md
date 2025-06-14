@@ -67,11 +67,18 @@ pnpm run preview
 
 1. Create a new service on Railway or Heroku
 2. Connect your GitHub repository
-3. Set the root directory to `server`
+3. Set the root directory to the repository root
 4. Set the `OPENAI_API_KEY` environment variable
-5. Deploy the server using the provided workflows
+5. Deploy the server using the provided workflows (`pnpm run start:prod`)
 
 ## Environment Variables
+
+Before running the app locally, copy the provided example files:
+
+```bash
+cp .env.example .env
+cp client/.env.example client/.env
+```
 
 ### Required for Development
 
