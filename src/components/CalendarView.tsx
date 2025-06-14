@@ -9,6 +9,7 @@ import { useWorkouts } from '@/hooks/useWorkouts';
 import { useReminders } from '@/hooks/useReminders';
 import { useTimeBlocks } from '@/hooks/useTimeBlocks';
 import { useMeals } from '@/hooks/useMeals';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -33,6 +34,7 @@ export const CalendarView = () => {
   const { reminders } = useReminders();
   const { timeBlocks } = useTimeBlocks();
   const { meals } = useMeals();
+  const { user } = useAuth();
 
   const getItemsForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -61,9 +63,12 @@ export const CalendarView = () => {
   };
 
   const handleDownloadCalendar = async () => {
+    if (!user) {
+      toast({ title: 'Error', description: 'You must be logged in to export your calendar', variant: 'destructive' });
+      return;
+    }
     try {
-      // Use temp-user since we're not using real authentication yet
-      const response = await fetch('/api/ical/temp-user');
+      const response = await fetch(`/api/ical/${user.id}`);
       
       if (!response.ok) {
         throw new Error('Failed to generate calendar export');

@@ -485,24 +485,17 @@ app.post('/api/gpt', async (req: Request, res: Response): Promise<void> => {
 app.get('/api/ical/:userId', async (req: Request, res: Response): Promise<void> => {
   const { userId } = req.params;
 
-  // Validate that userId is provided and not empty
-  if (!userId || userId === 'undefined' || userId === 'null') {
-    return res.status(400).json({ 
+  // Validate that userId is provided and not a placeholder
+  if (!userId || userId === 'undefined' || userId === 'null' || userId === 'temp-user') {
+    return res.status(400).json({
       message: 'User ID is required for calendar export',
       error: 'Missing or invalid user ID'
     });
   }
+
   try {
     console.log('[ICAL REQUEST]', { userId });
     const timeBlocks = await timeBlocksService.getAll();
-    const userTimeBlocks = timeBlocks.filter(
-      block => block.user_id === userId || block.user_id === 'temp-user'
-    );
-    // Use extensionless import so ts-node can resolve the TypeScript file in
-    // development and Node can load the compiled JavaScript in production.
-    const { CalendarGenerator } = await import('./src/lib/calendar');
-    
-    // Filter time blocks for the specific authenticated user only
     const userTimeBlocks = timeBlocks.filter(block => block.user_id === userId);
 
     if (userTimeBlocks.length === 0) {

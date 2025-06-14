@@ -6,6 +6,7 @@ import { workoutsService } from '../../services/workoutsService';
 import { tasksService } from '../../services/tasksService';
 import { remindersService } from '../../services/remindersService';
 import { timeBlocksService } from '../../services/timeBlocksService';
+import { supabase } from '../../integrations/supabase/client';
 
 // Mock all services
 vi.mock('../../services/mealsService');
@@ -13,10 +14,21 @@ vi.mock('../../services/workoutsService');
 vi.mock('../../services/tasksService');
 vi.mock('../../services/remindersService');
 vi.mock('../../services/timeBlocksService');
+vi.mock('../../integrations/supabase/client', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn()
+    }
+  }
+}));
 
 describe('parseFunctionCall', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: { id: 'test-user-id' } },
+      error: null
+    });
   });
 
   describe('createMeal', () => {
@@ -25,7 +37,7 @@ describe('parseFunctionCall', () => {
         id: 'test-id',
         name: 'Test Meal',
         meal_type: 'breakfast',
-        user_id: 'test-user',
+        user_id: 'test-user-id',
         created_at: new Date().toISOString(),
         planned_date: null,
         calories: null,
@@ -49,7 +61,7 @@ describe('parseFunctionCall', () => {
         calories: undefined,
         ingredients: undefined,
         instructions: undefined,
-        user_id: 'temp-user'
+        user_id: 'test-user-id'
       });
     });
 
@@ -72,7 +84,7 @@ describe('parseFunctionCall', () => {
         id: 'test-id',
         name: 'Test Workout',
         duration: 30,
-        user_id: 'test-user',
+        user_id: 'test-user-id',
         created_at: new Date().toISOString(),
         intensity: null,
         is_completed: false,
@@ -96,7 +108,7 @@ describe('parseFunctionCall', () => {
       const mockTask = {
         id: 'test-id',
         title: 'Test Task',
-        user_id: 'test-user',
+        user_id: 'test-user-id',
         created_at: new Date().toISOString(),
         description: null,
         due_date: null,
@@ -119,7 +131,7 @@ describe('parseFunctionCall', () => {
       const mockReminder = {
         id: 'test-id',
         title: 'Test Reminder',
-        user_id: 'test-user',
+        user_id: 'test-user-id',
         created_at: new Date().toISOString(),
         due_date: null,
         is_completed: false
@@ -141,7 +153,7 @@ describe('parseFunctionCall', () => {
       const mockTimeBlock = {
         id: 'test-id',
         title: 'Test Time Block',
-        user_id: 'test-user',
+        user_id: 'test-user-id',
         created_at: new Date().toISOString(),
         start_time: null,
         end_time: null,
