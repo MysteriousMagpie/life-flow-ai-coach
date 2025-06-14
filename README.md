@@ -5,6 +5,15 @@ Your intelligent companion for meal planning, task management, workout tracking,
 
 ## Project Structure
 
+This repository contains a React frontend and a single Express backend entry point:
+
+- `/client/` - React + Vite frontend application
+- `/src/` - TypeScript backend utilities used by `server.ts`
+- `server.ts` - Express backend server
+
+`src/` still contains some legacy client code that is no longer used. The active
+React application lives entirely under `client/src`.
+
 
 ## Quick Start
 
@@ -51,33 +60,38 @@ npm install -g pnpm@8.15.0
 
 The client will be available at `http://localhost:5173`
 
+
 ### Backend (Server)
 
+1. Install dependencies in the repository root:
+```bash
+pnpm install
+```
 
-   ```bash
-   pnpm install
-   ```
+2. Configure environment variables in `.env`:
+```
+OPENAI_API_KEY=your_openai_api_key
+PORT=3000
+CORS_ORIGIN=http://localhost:5173
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
+3. Start the development server:
+```bash
+pnpm run server
+```
 
-   ```
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   OPENAI_API_KEY=your_openai_api_key
-   PORT=3000
-   CORS_ORIGIN=http://localhost:5173
-   ```
-
-
-   ```bash
-   pnpm run server
-   ```
 
 The API server will be available at `http://localhost:3000`
-
 ## Development Workflow
+1. Start the backend server from the repository root with `pnpm run server`
+2. Start the frontend development server from the `/client` directory using pnpm
 
 
 3. The frontend will make API requests to the backend
+
+
 
 ## Deployment
 
@@ -108,6 +122,9 @@ The API server will be available at `http://localhost:3000`
 2. Choose "Web Service"
 3. Set the root directory to the repository root
 4. Build command: `pnpm install && pnpm run build:backend`
+5. Start command: `pnpm run start:prod`
+6. Configure environment variables in Render dashboard
+
 
 6. Configure environment variables in Render dashboard
 

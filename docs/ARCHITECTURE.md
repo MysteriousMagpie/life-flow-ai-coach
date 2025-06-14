@@ -19,7 +19,8 @@ client/
 └── src/                # React application
 
 src/
-└── server/             # Backend logic consumed by `server.ts`
+└── server/             # Backend utilities used by `server.ts`
+server.ts            # Express backend entry point
 
 e2e/                    # End-to-end tests
 .github/workflows/      # CI/CD workflows

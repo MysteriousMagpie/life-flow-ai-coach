@@ -11,6 +11,7 @@
 | `pnpm run lint` | Run ESLint for code quality checks (client) |
 | `pnpm test` | Run the unit test suite with Vitest (root) |
 | `pnpm run test:e2e` | Run end-to-end tests with Playwright (client) |
+| `pnpm run server` | Start the Express backend server |
 
 
 ## Development Workflow
@@ -20,6 +21,8 @@
    # Terminal 1: Start the client (from /client directory)
    cd client
    pnpm run dev
+   # Terminal 2: Start the server (from repository root)
+   pnpm run server
 
    ```
 
@@ -44,12 +47,17 @@
 ## Package Management
 
 - **Frontend (Client)**: Uses pnpm for faster installs and better dependency management
+- **Backend (Server)**: Uses pnpm for dependency management
+
 
 ### Installing Dependencies
 
 ```bash
 # Client dependencies
 cd client
+pnpm add package-name
+pnpm add -D dev-package-name
+# Backend dependencies
 pnpm add package-name
 pnpm add -D dev-package-name
 
@@ -73,6 +81,8 @@ pnpm add -D dev-package-name
 
 ## Build Pipeline
 
+The project uses pnpm for both the client and server:
+- Client builds with Vite and pnpm
+- Server builds with Node.js and pnpm
+- CI/CD uses pnpm for dependencies
 
-- CI/CD uses pnpm for all dependencies
-- Vercel deployment automatically detects pnpm via .npmrc
