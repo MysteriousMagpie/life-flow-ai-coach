@@ -5,14 +5,11 @@ Your intelligent companion for meal planning, task management, workout tracking,
 
 ## Project Structure
 
-This repository is split into client and server components:
+This repository uses a streamlined layout:
 
 - `/client/` - React + Vite frontend application
-- `/src/` - TypeScript backend utilities used by `server.ts`
-- `/server/` - Express backend server and API routes (legacy)
-
-`src/` still contains some legacy client code that is no longer used. The active
-React application lives entirely under `client/src`.
+- `/src/` - Backend utilities imported by `server.ts`
+- `server.ts` - Express server entry point
 
 ## Quick Start
 
