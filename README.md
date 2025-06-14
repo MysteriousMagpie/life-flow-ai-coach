@@ -5,13 +5,6 @@ Your intelligent companion for meal planning, task management, workout tracking,
 
 ## Project Structure
 
-This repository contains both the client and server code:
-
-- `/client/` - React + Vite frontend application
-- `/src/` - TypeScript backend utilities consumed by `server.ts`
-- `server.ts` - Express backend entry point
-
-All frontend code now lives under `client/src`.
 
 ## Quick Start
 
@@ -60,30 +53,21 @@ The client will be available at `http://localhost:5173`
 
 ### Backend (Server)
 
-1. Install server dependencies from the repository root:
+
    ```bash
    pnpm install
    ```
 
-2. Copy environment variables:
-   ```bash
-   cp .env.example .env
-   ```
 
-3. Configure your environment variables in `.env`:
    ```
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
    OPENAI_API_KEY=your_openai_api_key
    PORT=3000
    CORS_ORIGIN=http://localhost:5173
    ```
 
-4. Add your Supabase credentials to the root `.env` file:
-   ```
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
 
-5. Start the development server:
    ```bash
    pnpm run server
    ```
@@ -92,14 +76,7 @@ The API server will be available at `http://localhost:3000`
 
 ## Development Workflow
 
-1. Start the backend server from the repository root
-   ```bash
-   pnpm run server
-   ```
-2. Start the frontend development server from the `/client` directory
-   ```bash
-   cd client && pnpm run dev
-   ```
+
 3. The frontend will make API requests to the backend
 
 ## Deployment
@@ -131,7 +108,7 @@ The API server will be available at `http://localhost:3000`
 2. Choose "Web Service"
 3. Set the root directory to the repository root
 4. Build command: `pnpm install && pnpm run build:backend`
-5. Start command: `node dist/server.js`
+
 6. Configure environment variables in Render dashboard
 
 
@@ -152,6 +129,26 @@ pnpm ts-node scripts/seed.ts
 ```
 
 Make sure to set your `SUPABASE_SERVICE_ROLE_KEY` environment variable before running the seed script.
+
+### Supabase Functions
+
+The `supabase/functions/gpt-chat` directory contains an edge function used by the application to handle AI chat requests. It forwards user messages to OpenAI, processes function calls (like adding meals), and stores results in Supabase tables.
+
+#### Deploying Functions
+
+1. Install the Supabase CLI and log in:
+   ```bash
+   npm install -g supabase
+   supabase login
+   ```
+2. Link the CLI to your project:
+   ```bash
+   supabase link --project-ref <your-project-id>
+   ```
+3. Deploy the function:
+   ```bash
+   supabase functions deploy gpt-chat
+   ```
 
 ## Features
 
