@@ -5,7 +5,6 @@ Your intelligent companion for meal planning, task management, workout tracking,
 
 ## Project Structure
 
-Placeholder
 
 ## Quick Start
 
