@@ -10,6 +10,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    exclude: [
+      '**/node_modules/**',
+      'client/e2e/**',
+      'client/tests/**',
+      'tests/e2e/**'
+    ],
+    setupFiles: './vitest.setup.ts',
   },
   resolve: {
     alias: {
