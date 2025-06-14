@@ -8,7 +8,11 @@ Your intelligent companion for meal planning, task management, workout tracking,
 This repository is split into client and server components:
 
 - `/client/` - React + Vite frontend application
-- `/server/` - Express backend server and API routes
+- `/src/` - TypeScript backend utilities used by `server.ts`
+- `/server/` - Express backend server and API routes (legacy)
+
+`src/` still contains some legacy client code that is no longer used. The active
+React application lives entirely under `client/src`.
 
 ## Quick Start
 
