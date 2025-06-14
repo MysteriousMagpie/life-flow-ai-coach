@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "./client/tsconfig.app.json",
 
   "include": [
     "server.ts",
@@ -24,6 +24,10 @@
     "module": "CommonJS",
     "target": "ES2020",
     "moduleResolution": "Node",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "types": ["node"],
     "jsx": "preserve"          // <- stops JSX errors if anything sneaks through
   }
