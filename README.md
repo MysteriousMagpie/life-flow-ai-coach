@@ -14,6 +14,7 @@ This repository contains a React frontend and a single Express backend entry poi
 `src/` still contains some legacy client code that is no longer used. The active
 React application lives entirely under `client/src`.
 
+
 ## Quick Start
 
 ### Prerequisites
@@ -81,10 +82,13 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 pnpm run server
 ```
 
+
 The API server will be available at `http://localhost:3000`
 ## Development Workflow
 1. Start the backend server from the repository root with `pnpm run server`
 2. Start the frontend development server from the `/client` directory using pnpm
+
+
 3. The frontend will make API requests to the backend
 
 
@@ -121,6 +125,10 @@ The API server will be available at `http://localhost:3000`
 5. Start command: `pnpm run start:prod`
 6. Configure environment variables in Render dashboard
 
+
+6. Configure environment variables in Render dashboard
+
+
 ## Database Setup
 
 This project uses Supabase for the database. Make sure to:
@@ -138,6 +146,26 @@ pnpm ts-node scripts/seed.ts
 ```
 
 Make sure to set your `SUPABASE_SERVICE_ROLE_KEY` environment variable before running the seed script.
+
+### Supabase Functions
+
+The `supabase/functions/gpt-chat` directory contains an edge function used by the application to handle AI chat requests. It forwards user messages to OpenAI, processes function calls (like adding meals), and stores results in Supabase tables.
+
+#### Deploying Functions
+
+1. Install the Supabase CLI and log in:
+   ```bash
+   npm install -g supabase
+   supabase login
+   ```
+2. Link the CLI to your project:
+   ```bash
+   supabase link --project-ref <your-project-id>
+   ```
+3. Deploy the function:
+   ```bash
+   supabase functions deploy gpt-chat
+   ```
 
 ## Features
 

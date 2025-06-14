@@ -13,6 +13,7 @@
 | `pnpm run test:e2e` | Run end-to-end tests with Playwright (client) |
 | `pnpm run server` | Start the Express backend server |
 
+
 ## Development Workflow
 
 1. **Start Development Environment**
@@ -22,6 +23,7 @@
    pnpm run dev
    # Terminal 2: Start the server (from repository root)
    pnpm run server
+
    ```
 
 2. **Code Quality**
@@ -47,6 +49,7 @@
 - **Frontend (Client)**: Uses pnpm for faster installs and better dependency management
 - **Backend (Server)**: Uses pnpm for dependency management
 
+
 ### Installing Dependencies
 
 ```bash
@@ -57,6 +60,9 @@ pnpm add -D dev-package-name
 # Backend dependencies
 pnpm add package-name
 pnpm add -D dev-package-name
+
+
+```
 
 ## Development Tips
 
@@ -79,3 +85,4 @@ The project uses pnpm for both the client and server:
 - Client builds with Vite and pnpm
 - Server builds with Node.js and pnpm
 - CI/CD uses pnpm for dependencies
+

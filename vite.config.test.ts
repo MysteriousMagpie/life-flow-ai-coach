@@ -1,5 +1,5 @@
 
-import { defineConfig } from 'vitest/config';
+import { defineConfig, configDefaults } from 'vitest/config';
 import { resolve } from 'path';
 
 export default defineConfig({
@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    exclude: [...configDefaults.exclude, 'client/e2e/**', 'client/tests/**', 'tests/e2e/**']
   },
   resolve: {
     alias: {
