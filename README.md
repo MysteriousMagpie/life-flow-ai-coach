@@ -73,23 +73,19 @@ The client will be available at `http://localhost:5173`
 
 3. Copy environment variables:
    ```bash
-   cp .env.example .env
+   cp ../server.env.example .env
    ```
 
 4. Configure your environment variables in `.env`:
    ```
    OPENAI_API_KEY=your_openai_api_key
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
    PORT=3000
    CORS_ORIGIN=http://localhost:5173
    ```
 
-5. Create a `.env` file in the repository root and add your Supabase credentials:
-   ```
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-6. Start the development server:
+5. Start the development server:
    ```bash
    npm run dev
    ```
