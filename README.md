@@ -53,12 +53,12 @@ The client will be available at `http://localhost:5173`
 
 ### Backend (Server)
 
-1. Install backend dependencies from the repository root:
+
    ```bash
    pnpm install
    ```
 
-2. Create a `.env` file in the repository root and add your credentials:
+
    ```
    SUPABASE_URL=your_supabase_url
    SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -76,8 +76,7 @@ The API server will be available at `http://localhost:3000`
 
 ## Development Workflow
 
-1. Start the backend server from the repository root using `pnpm run server`
-2. Start the frontend development server from the `/client` directory using pnpm
+
 3. The frontend will make API requests to the backend
 
 ## Deployment
@@ -109,7 +108,7 @@ The API server will be available at `http://localhost:3000`
 2. Choose "Web Service"
 3. Set the root directory to the repository root
 4. Build command: `pnpm install && pnpm run build:backend`
-5. Start command: `pnpm run start:prod`
+
 6. Configure environment variables in Render dashboard
 
 
