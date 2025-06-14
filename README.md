@@ -159,6 +159,26 @@ pnpm ts-node scripts/seed.ts
 
 Make sure to set your `SUPABASE_SERVICE_ROLE_KEY` environment variable before running the seed script.
 
+### Supabase Functions
+
+The `supabase/functions/gpt-chat` directory contains an edge function used by the application to handle AI chat requests. It forwards user messages to OpenAI, processes function calls (like adding meals), and stores results in Supabase tables.
+
+#### Deploying Functions
+
+1. Install the Supabase CLI and log in:
+   ```bash
+   npm install -g supabase
+   supabase login
+   ```
+2. Link the CLI to your project:
+   ```bash
+   supabase link --project-ref <your-project-id>
+   ```
+3. Deploy the function:
+   ```bash
+   supabase functions deploy gpt-chat
+   ```
+
 ## Features
 
 - **AI Planning Assistant**: Chat with GPT to plan meals, tasks, and workouts
