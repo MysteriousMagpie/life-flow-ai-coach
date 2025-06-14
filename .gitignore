@@ -30,3 +30,12 @@ dist-ssr
 !client/.env.example
 
 # Ignore local .env files
+.env.local
+.env.*.local
+
+# Testing
+test-results/
+
+# Package locks
+bun.lockb
+
