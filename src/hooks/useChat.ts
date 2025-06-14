@@ -2,6 +2,11 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+
 interface Message {
   id: string;
   content: string;
@@ -35,11 +40,11 @@ export const useChat = () => {
 
     try {
       // Use the new API endpoint
-      const response = await fetch('https://ceeobnncvfsqqliojsxn.supabase.co/functions/v1/gpt-chat', {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/gpt-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlZW9ibm5jdmZzcXFsaW9qc3huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxOTkwODksImV4cCI6MjA2Mzc3NTA4OX0.UJShCgS3BdR0KUKN5OPS_WJbjJgUKJhIMm1pbmXv9Bw`
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({ 
           message: content, 

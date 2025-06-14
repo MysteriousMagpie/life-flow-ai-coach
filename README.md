@@ -78,7 +78,13 @@ The client will be available at `http://localhost:5173`
    CORS_ORIGIN=http://localhost:5173
    ```
 
-5. Start the development server:
+5. Create a `.env` file in the repository root and add your Supabase credentials:
+   ```
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+6. Start the development server:
    ```bash
    npm run dev
    ```
@@ -98,8 +104,8 @@ The API server will be available at `http://localhost:3000`
 1. Connect your repository to Vercel
 2. Set the root directory to `client`
 3. Configure environment variables in Vercel dashboard:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_SUPABASE_URL` / `SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY` / `SUPABASE_ANON_KEY`
    - `VITE_API_BASE_URL` (your deployed backend URL)
 4. Deploy automatically on push to main branch
 
