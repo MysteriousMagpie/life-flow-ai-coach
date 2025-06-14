@@ -139,3 +139,7 @@ test-results/
 *.sln
 *.sw?
 
+# Ignore local .env files
+# Ignore other package manager lock files
+**/package-lock.json
+**/bun.lockb
