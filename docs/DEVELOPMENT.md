@@ -20,10 +20,9 @@
    # Terminal 1: Start the client (from /client directory)
    cd client
    pnpm run dev
-   
-   # Terminal 2: Start the server (from /server directory)
-   cd server
-   npm run dev
+
+   # Terminal 2: Start the server from the repository root
+   npm run server
    ```
 
 2. **Code Quality**
@@ -57,8 +56,7 @@ cd client
 pnpm add package-name
 pnpm add -D dev-package-name
 
-# Server dependencies  
-cd server
+# Server dependencies (from repository root)
 npm install package-name
 npm install --save-dev dev-package-name
 ```

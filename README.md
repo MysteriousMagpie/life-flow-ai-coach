@@ -5,14 +5,12 @@ Your intelligent companion for meal planning, task management, workout tracking,
 
 ## Project Structure
 
-This repository is split into client and server components:
+This repository contains the following major folders:
 
 - `/client/` - React + Vite frontend application
-- `/src/` - TypeScript backend utilities used by `server.ts`
-- `/server/` - Express backend server and API routes (legacy)
+- `/src/` - TypeScript backend utilities consumed by `server.ts`
 
-`src/` still contains some legacy client code that is no longer used. The active
-React application lives entirely under `client/src`.
+`server.ts` at the repository root runs the Express API server.
 
 ## Quick Start
 
@@ -61,44 +59,42 @@ The client will be available at `http://localhost:5173`
 
 ### Backend (Server)
 
-1. Navigate to the server directory:
-   ```bash
-   cd server
-   ```
-
-2. Install dependencies:
+1. Install dependencies from the repository root:
    ```bash
    npm install
    ```
 
-3. Copy environment variables:
+2. Copy environment variables:
    ```bash
    cp .env.example .env
    ```
 
-4. Configure your environment variables in `.env`:
+3. Configure your environment variables in `.env`:
    ```
    OPENAI_API_KEY=your_openai_api_key
    PORT=3000
    CORS_ORIGIN=http://localhost:5173
    ```
 
-5. Create a `.env` file in the repository root and add your Supabase credentials:
+4. Create a `.env` file in the repository root and add your Supabase credentials:
    ```
    SUPABASE_URL=your_supabase_url
    SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-6. Start the development server:
+5. Start the development server:
    ```bash
-   npm run dev
+   npm run server
    ```
 
 The API server will be available at `http://localhost:3000`
 
 ## Development Workflow
 
-1. Start the backend server from the `/server` directory
+1. Start the backend server:
+   ```bash
+   npm run server
+   ```
 2. Start the frontend development server from the `/client` directory using pnpm
 3. The frontend will make API requests to the backend
 
@@ -119,7 +115,7 @@ The API server will be available at `http://localhost:3000`
 
 #### Using Railway:
 1. Connect your repository to Railway
-2. Set the root directory to `server`
+2. Keep the root directory as the repository root
 3. Configure environment variables:
    - `OPENAI_API_KEY`
    - `PORT` (Railway will set this automatically)
@@ -129,15 +125,14 @@ The API server will be available at `http://localhost:3000`
 #### Using Render:
 1. Connect your repository to Render
 2. Choose "Web Service"
-3. Set the root directory to `server`
+3. Keep the root directory as the repository root
 4. Build command: `npm install && npm run build`
 5. Start command: `npm run start`
 6. Configure environment variables in Render dashboard
 
 #### Using Docker:
 ```bash
-cd server
-docker build -t life-flow-server .
+docker build -t life-flow-server -f server/Dockerfile .
 docker run -p 3000:3000 -e OPENAI_API_KEY=your_key life-flow-server
 ```
 

@@ -21,6 +21,8 @@ client/
 src/
 └── server/             # Backend logic consumed by `server.ts`
 
+server.ts               # Express API entry point
+
 e2e/                    # End-to-end tests
 .github/workflows/      # CI/CD workflows
 ```
