@@ -24,5 +24,13 @@ dist-ssr
 *.sw?
 .env
 .env*
-
 # Ignore local .env files
+.env.local
+.env.*.local
+
+# Testing
+test-results/
+
+# Package locks
+bun.lockb
+
