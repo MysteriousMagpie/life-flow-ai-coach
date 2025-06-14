@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { Task, CreateTask, UpdateTask } from '@/types/database';
 
 export const tasksService = {

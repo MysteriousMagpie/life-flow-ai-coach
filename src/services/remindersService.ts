@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { Reminder, CreateReminder, UpdateReminder } from '@/types/database';
 
 export const remindersService = {

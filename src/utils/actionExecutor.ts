@@ -1,6 +1,6 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 
 export interface GPTAction {
   type: 'addMeal' | 'addTask' | 'addWorkout' | 'addReminder' | 'addTimeBlock' | 'storeWorkoutPlan' | 'planDailyMeals';

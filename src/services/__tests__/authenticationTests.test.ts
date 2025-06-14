@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { mealsService } from '@/services/mealsService';
 import { tasksService } from '@/services/tasksService';
 import { workoutsService } from '@/services/workoutsService';
@@ -8,7 +8,7 @@ import { remindersService } from '@/services/remindersService';
 import { timeBlocksService } from '@/services/timeBlocksService';
 
 // Mock the Supabase client
-vi.mock('@/integrations/supabase/client', () => ({
+vi.mock('@/integrations/supabase', () => ({
   supabase: {
     auth: {
       getUser: vi.fn()

@@ -4,7 +4,7 @@ import { remindersService } from '@/services/remindersService';
 import { Reminder, CreateReminder, UpdateReminder } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { useEffect } from 'react';
 
 export const useReminders = () => {

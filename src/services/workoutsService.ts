@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { Workout, CreateWorkout, UpdateWorkout } from '@/types/database';
 
 export const workoutsService = {

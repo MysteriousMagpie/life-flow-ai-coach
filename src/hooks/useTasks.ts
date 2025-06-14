@@ -4,7 +4,7 @@ import { tasksService } from '@/services/tasksService';
 import { Task, CreateTask, UpdateTask } from '@/types/database';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { useEffect } from 'react';
 
 export const useTasks = () => {

@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { Meal, CreateMeal, UpdateMeal } from '@/types/database';
 
 export const mealsService = {

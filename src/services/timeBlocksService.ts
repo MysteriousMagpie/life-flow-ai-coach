@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase';
 import { TimeBlock, CreateTimeBlock, UpdateTimeBlock } from '@/types/database';
 
 export const timeBlocksService = {
